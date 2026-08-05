@@ -1,0 +1,46 @@
+{
+  "manifest_version": 3,
+  "name": "DLsite Price Tracker",
+  "version": "0.1.0",
+  "description": "DLsite の作品ページに、価格と割引の推移グラフを表示します。今が買い時かどうかが一目で分かります。",
+  "author": "VoiceLaboratory (voicelabo.net)",
+  "homepage_url": "https://github.com/CureArcana/dlsite-price-tracker",
+
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArFFAp/AxLlnG+4GiT2vii3MtL+Nl8XbYsR0i+KlhCvMPnTfl8n0b8mOQYs86oujkkrST3u5H2VxqEhJN3v7bEuO2zb+iQrXpfDbzyaLIG6Y10lcWTEI248Hug4S0NWgaPCIEXKIk+lpiuhprq2JT7ZCKdpLd0GWsGD1fUJE10Jyro7OIi/sTGW+qxM75iK46SR2lGfWjP8ZM2IjfVS+XzgXGBEeO/K0xymI+KwZJAAL+l96Cg416wbU+pjdrgRXNZuz3xlnmlj26xu6nIDNtMwXil81I4Pp9WRmV4xSmYgJEvd4FBxiz8ygpuR1OY4KltlaRfZ1TPZ5ZLcUqcV81WQIDAQAB",
+
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+
+  "permissions": ["storage"],
+
+  "host_permissions": [
+    "https://voicelabo.net/*",
+    "https://api.github.com/*"
+  ],
+
+  "background": {
+    "service_worker": "src/background/service-worker.js",
+    "type": "module"
+  },
+
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.dlsite.com/*/work/=/product_id/*",
+        "https://www.dlsite.com/*/announce/=/product_id/*"
+      ],
+      "js": [
+        "src/lib/dom.js",
+        "src/lib/format.js",
+        "src/lib/chart.js",
+        "src/content/work-page.js"
+      ],
+      "css": ["src/content/panel.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}

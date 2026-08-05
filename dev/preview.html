@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DLsite Price Tracker — 開発プレビュー</title>
+<!-- 拡張の実ファイルをそのまま読み込む。コピーを置かないこと（乖離の元） -->
+<link rel="stylesheet" href="/src/content/panel.css">
+<style>
+  body { margin: 0; padding: 24px; background: #f2f4f3; font-family: "Hiragino Sans", Meiryo, system-ui, sans-serif; color: #222; }
+  .wrap { max-width: 860px; margin: 0 auto; }
+  .note { margin: 0 0 18px; padding: 10px 14px; border-left: 3px solid #10b981; background: #fff; font-size: 13px; line-height: 1.7; }
+  .fake { padding: 14px; border: 1px dashed #c8d0cd; border-radius: 8px; background: #fff; color: #8a938f; font-size: 12px; }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 18px; }
+  .controls button { padding: 6px 12px; border: 1px solid #c8d0cd; border-radius: 6px; background: #fff; font: inherit; font-size: 12px; cursor: pointer; }
+  h1 { margin: 0 0 6px; font-size: 18px; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #0e1113; color: #e5e7eb; }
+    .note, .fake, .controls button { background: #16191c; border-color: #2c3237; color: #9ca3af; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>DLsite Price Tracker — 開発プレビュー</h1>
+  <p class="note">
+    DLsite の作品ページと同じ DOM 骨格を再現し、拡張の実ファイル（<code>src/</code> 配下）を
+    そのまま読み込んでいます。<code>chrome.*</code> はこのページ内でスタブに差し替え、
+    API の代わりに <code>dev/fixture-*.json</code> を返します。<br>
+    テーマは OS の設定（<code>prefers-color-scheme</code>）に追従します。
+  </p>
+
+  <div class="controls">
+    <button type="button" data-state="ok">正常（RJ01509966）</button>
+    <button type="button" data-state="flat">値動きなし</button>
+    <button type="button" data-state="404">計測対象外（404）</button>
+    <button type="button" data-state="error">取得失敗</button>
+  </div>
+
+  <!-- ここから DLsite の骨格を模したもの。実ページのセレクタに合わせてある。 -->
+  <div id="work_buy_box_wrapper">
+    <div class="work_buy_main">
+      <div id="work_price">
+        <div class="work_buy_type"><div class="work_buy_container"><div class="work_buy_body">
+          <div class="work_buy_label">サークル設定価格</div>
+          <div class="work_buy_content">
+            <span class="strike"><span class="work_price_parts"><span class="work_price_base">770</span><span class="work_price_suffix">円</span></span></span>
+          </div>
+        </div></div></div>
+      </div>
+      <div class="campaign_info">45%OFF 09/14 13:59 まで</div>
+    </div>
+  </div>
+
+  <!-- パネルはこの #work_outline の直前に入るのが正解 -->
+  <table id="work_outline"><tbody>
+    <tr><th>販売日</th><td>2025年12月03日</td></tr>
+    <tr><th>声優</th><td>かの仔</td></tr>
+  </tbody></table>
+
+  <div class="work_parts_area" style="margin-top:16px">
+    <div class="fake">（作品紹介本文の位置）</div>
+  </div>
+</div>
+
+<script>
+// ── chrome.* のスタブ。拡張の実コードを一切変えずに動かすための足場 ──
+(() => {
+  const mem = {};
+  let mode = "ok";
+  let fixture = null;
+
+  window.__DPT_SET_MODE = (m) => { mode = m; };
+
+  window.chrome = {
+    storage: {
+      local: {
+        async get(key) {
+          if (key === null) return { ...mem };
+          const keys = Array.isArray(key) ? key : [key];
+          const out = {};
+          for (const k of keys) if (k in mem) out[k] = mem[k];
+          return out;
+        },
+        async set(obj) { Object.assign(mem, obj); },
+        async remove(keys) { for (const k of [].concat(keys)) delete mem[k]; },
+      },
+    },
+    runtime: {
+      getManifest: () => ({ version: "0.1.0" }),
+      async sendMessage(msg) {
+        if (msg.type === "UPDATE_CHECK") {
+          return { latest: "0.2.0", current: "0.1.0", hasUpdate: true, url: "#" };
+        }
+        if (msg.type !== "PRICE_HISTORY") return null;
+        if (mode === "404") return { ok: false, data: null, status: 404 };
+        if (mode === "error") return { ok: false, data: null, status: 500, transient: true };
+        if (!fixture) fixture = await (await fetch("/dev/fixture-RJ01509966.json")).json();
+        const data = JSON.parse(JSON.stringify(fixture));
+        if (mode === "flat") {
+          // 一度も割引されていない作品の見え方を確認する
+          data.points = [{ d: data.tracking_since, p: 770, l: 770, dc: 0 }];
+          data.stats = { ...data.stats, current: 770, min: 770, max: 770, discount_rate: null,
+                         is_discount: false, discount_end: null, signal: "no_change", is_lowest_ever: true };
+        }
+        return { ok: true, data, status: 200 };
+      },
+    },
+  };
+
+  // 作品ページ判定を通すため、URL に product_id を含める
+  history.replaceState({}, "", "/maniax/work/=/product_id/RJ01509966.html");
+})();
+</script>
+
+<script src="/src/lib/dom.js"></script>
+<script src="/src/lib/format.js"></script>
+<script src="/src/lib/chart.js"></script>
+<script src="/src/content/work-page.js"></script>
+
+<script>
+document.querySelector(".controls").addEventListener("click", (e) => {
+  const b = e.target.closest("button[data-state]");
+  if (!b) return;
+  window.__DPT_SET_MODE(b.dataset.state);
+  document.getElementById("dpt-panel")?.remove();
+  const s = document.createElement("script");
+  s.src = "/src/content/work-page.js?t=" + Date.now();
+  document.body.appendChild(s);
+});
+</script>
+</body>
+</html>

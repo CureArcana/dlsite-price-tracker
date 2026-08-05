@@ -1,0 +1,513 @@
+/*
+ * DLsite Price Tracker — パネルのスタイル
+ *
+ * DLsite 側の CSS に負けないよう、ほぼ全ての規則を #dpt-panel で始めて詳細度を上げる。
+ * 逆にこちらのスタイルが DLsite 側へ漏れないよう、セレクタは必ず #dpt-panel 配下に閉じる。
+ */
+
+#dpt-panel {
+  --dpt-accent: #10b981;
+  --dpt-accent-soft: rgba(16, 185, 129, 0.14);
+  --dpt-accent-text: #0a7d4f;
+  /* 塗りつぶしボタン・バッジ用。--dpt-accent に白文字だとコントラスト 2.56:1 で
+     WCAG AA（太字12px なら 4.5:1 必要）に届かないため、専用の組み合わせを持つ。 */
+  --dpt-accent-strong: #0a7d4f;
+  --dpt-on-accent: #ffffff;
+  /* グラフの線は「非テキストのコントラスト 3:1」を満たす必要がある。
+     白地に --dpt-accent(#10b981) をそのまま引くと 2.54:1 で足りないため、
+     線だけ一段濃いミントにする（見た目のブランド感は保てる範囲）。 */
+  --dpt-line: #0d9668;
+  /* 割引帯は面積が広い（多くの作品でほぼ全期間が割引）。--dpt-accent-soft のままだと
+     地と図が反転して「白い非割引期間」のほうが強調されて見えるので、専用に薄くする。 */
+  --dpt-band: rgba(16, 185, 129, 0.075);
+  --dpt-bg: #ffffff;
+  --dpt-bg-sub: #f7f9f8;
+  --dpt-fg: #1f2937;
+  --dpt-fg-sub: #6b7280;
+  --dpt-border: #e3e8e6;
+  --dpt-list-line: #6b7280;
+
+  display: block;
+  box-sizing: border-box;
+  margin: 20px 0;
+  padding: 0;
+  border: 1px solid var(--dpt-border);
+  border-radius: 10px;
+  background: var(--dpt-bg);
+  color: var(--dpt-fg);
+  font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", Meiryo, system-ui, sans-serif;
+  font-size: 13px;
+  line-height: 1.6;
+  overflow: hidden;
+}
+
+@media (prefers-color-scheme: dark) {
+  #dpt-panel {
+    --dpt-accent: #12c98a;
+    --dpt-accent-soft: rgba(18, 201, 138, 0.16);
+    --dpt-accent-text: #34d399;
+    /* 暗い地では明るいミントを塗って、文字側を暗くするほうがコントラストが取れる */
+    --dpt-accent-strong: #12c98a;
+    --dpt-on-accent: #06231a;
+    --dpt-line: #12c98a;
+    --dpt-band: rgba(18, 201, 138, 0.10);
+    --dpt-bg: #16191c;
+    --dpt-bg-sub: #1d2125;
+    --dpt-fg: #e5e7eb;
+    --dpt-fg-sub: #9ca3af;
+    --dpt-border: #2c3237;
+    --dpt-list-line: #6b7280;
+  }
+}
+
+#dpt-panel * {
+  box-sizing: border-box;
+}
+
+/* ── ヘッダ ── */
+#dpt-panel .dpt-head {
+  margin: 0;
+  border-bottom: 1px solid var(--dpt-border);
+  background: var(--dpt-bg-sub);
+}
+
+#dpt-panel.dpt-collapsed .dpt-head {
+  border-bottom-color: transparent;
+}
+
+#dpt-panel .dpt-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin: 0;
+  padding: 11px 14px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+#dpt-panel .dpt-toggle:focus-visible {
+  outline: 2px solid var(--dpt-accent);
+  outline-offset: -2px;
+}
+
+#dpt-panel .dpt-head-icon {
+  display: inline-flex;
+  color: var(--dpt-accent);
+}
+
+#dpt-panel .dpt-title {
+  flex: 1 1 auto;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+}
+
+#dpt-panel .dpt-chevron {
+  display: inline-flex;
+  color: var(--dpt-fg-sub);
+  transition: transform 0.18s ease;
+}
+
+#dpt-panel.dpt-collapsed .dpt-chevron {
+  transform: rotate(-90deg);
+}
+
+#dpt-panel .dpt-body {
+  padding: 14px;
+}
+
+#dpt-panel.dpt-collapsed .dpt-body {
+  display: none;
+}
+
+/* ── 状態表示 ── */
+#dpt-panel .dpt-state {
+  padding: 18px 4px;
+  color: var(--dpt-fg-sub);
+  text-align: center;
+}
+
+#dpt-panel .dpt-state-sub {
+  padding: 0 4px 10px;
+  color: var(--dpt-fg-sub);
+  font-size: 12px;
+  text-align: center;
+}
+
+/* ── 期間タブ ── */
+#dpt-panel .dpt-tabs {
+  display: flex;
+  gap: 4px;
+  margin: 0 0 12px;
+}
+
+#dpt-panel .dpt-tab {
+  margin: 0;
+  padding: 5px 12px;
+  border: 1px solid var(--dpt-border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--dpt-fg-sub);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+#dpt-panel .dpt-tab:hover {
+  border-color: var(--dpt-accent);
+  color: var(--dpt-accent-text);
+}
+
+#dpt-panel .dpt-tab.is-active {
+  border-color: var(--dpt-accent);
+  background: var(--dpt-accent-soft);
+  color: var(--dpt-accent-text);
+  font-weight: 700;
+}
+
+#dpt-panel .dpt-tab:focus-visible {
+  outline: 2px solid var(--dpt-accent);
+  outline-offset: 1px;
+}
+
+/* ── サマリ ── */
+#dpt-panel .dpt-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0 0 10px;
+}
+
+#dpt-panel .dpt-badge {
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+#dpt-panel .dpt-badge-best {
+  background: var(--dpt-accent-strong);
+  color: var(--dpt-on-accent);
+}
+
+#dpt-panel .dpt-badge-good {
+  background: var(--dpt-accent-soft);
+  color: var(--dpt-accent-text);
+}
+
+#dpt-panel .dpt-badge-normal,
+#dpt-panel .dpt-badge-flat {
+  background: var(--dpt-bg-sub);
+  color: var(--dpt-fg-sub);
+}
+
+#dpt-panel .dpt-badge-high {
+  background: rgba(217, 119, 6, 0.14);
+  color: #b45309;
+}
+
+@media (prefers-color-scheme: dark) {
+  #dpt-panel .dpt-badge-high {
+    color: #fbbf24;
+  }
+}
+
+#dpt-panel .dpt-current {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+#dpt-panel .dpt-off {
+  color: var(--dpt-accent-text);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+#dpt-panel .dpt-sale-end {
+  flex: 1 1 100%;
+  color: var(--dpt-fg-sub);
+  font-size: 12px;
+}
+
+/* ── グラフ ── */
+#dpt-panel .dpt-chart-box {
+  /* chart.js がこの値を読んで viewBox の高さに使う。単位は px で書くこと。 */
+  --dpt-chart-h: 210px;
+
+  position: relative;
+  margin: 0 0 10px;
+}
+
+#dpt-panel .dpt-chart {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+#dpt-panel .dpt-grid line {
+  stroke: var(--dpt-border);
+  stroke-width: 1;
+}
+
+#dpt-panel .dpt-axis-y {
+  fill: var(--dpt-fg-sub);
+  font-size: 10px;
+  text-anchor: end;
+}
+
+#dpt-panel .dpt-axis-x text {
+  fill: var(--dpt-fg-sub);
+  font-size: 10px;
+  text-anchor: middle;
+}
+
+#dpt-panel .dpt-bands rect {
+  fill: var(--dpt-band);
+}
+
+#dpt-panel .dpt-line-price {
+  fill: none;
+  stroke: var(--dpt-line);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+#dpt-panel .dpt-line-list {
+  fill: none;
+  stroke: var(--dpt-list-line);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 4;
+  vector-effect: non-scaling-stroke;
+}
+
+#dpt-panel .dpt-marks circle {
+  fill: var(--dpt-line);
+  stroke: var(--dpt-bg);
+  stroke-width: 1.5;
+}
+
+#dpt-panel .dpt-guide {
+  stroke: var(--dpt-fg-sub);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+  pointer-events: none;
+}
+
+/* display:flex はブラウザ既定の [hidden]{display:none} に勝ってしまうので、
+   非表示時の規則を明示的に置く。無いと空のツールチップが白い箱として残る。 */
+#dpt-panel .dpt-tooltip[hidden] {
+  display: none;
+}
+
+#dpt-panel .dpt-tooltip {
+  position: absolute;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  min-width: 96px;
+  padding: 7px 10px;
+  border: 1px solid var(--dpt-border);
+  border-radius: 7px;
+  background: var(--dpt-bg);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.14);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+#dpt-panel .dpt-tip-date {
+  color: var(--dpt-fg-sub);
+  font-size: 11px;
+}
+
+#dpt-panel .dpt-tip-price {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+#dpt-panel .dpt-tip-sub {
+  color: var(--dpt-fg-sub);
+  font-size: 11px;
+}
+
+/* ── 統計 ── */
+#dpt-panel .dpt-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 1px;
+  margin: 0 0 10px;
+  padding: 0;
+  border: 1px solid var(--dpt-border);
+  border-radius: 8px;
+  background: var(--dpt-border);
+  overflow: hidden;
+}
+
+#dpt-panel .dpt-stat {
+  margin: 0;
+  padding: 7px 10px;
+  background: var(--dpt-bg);
+}
+
+#dpt-panel .dpt-stat dt {
+  margin: 0;
+  color: var(--dpt-fg-sub);
+  font-size: 11px;
+}
+
+#dpt-panel .dpt-stat dd {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* ── 凡例 ── */
+#dpt-panel .dpt-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 0 0 12px;
+}
+
+#dpt-panel .dpt-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--dpt-fg-sub);
+  font: inherit;
+  font-size: 11px;
+}
+
+#dpt-panel .dpt-key-btn {
+  cursor: pointer;
+  opacity: 0.45;
+}
+
+#dpt-panel .dpt-key-btn.is-on {
+  opacity: 1;
+}
+
+#dpt-panel .dpt-key-btn:focus-visible {
+  outline: 2px solid var(--dpt-accent);
+  outline-offset: 2px;
+}
+
+#dpt-panel .dpt-swatch {
+  display: inline-block;
+  width: 14px;
+  height: 3px;
+  border-radius: 2px;
+}
+
+#dpt-panel .dpt-swatch-price {
+  background: var(--dpt-accent);
+}
+
+#dpt-panel .dpt-swatch-list {
+  background: repeating-linear-gradient(
+    90deg,
+    var(--dpt-list-line) 0 4px,
+    transparent 4px 7px
+  );
+}
+
+#dpt-panel .dpt-swatch-band {
+  height: 10px;
+  background: var(--dpt-band);
+  outline: 1px solid var(--dpt-border);
+}
+
+/* ── フッター ── */
+#dpt-panel .dpt-footer {
+  padding-top: 10px;
+  border-top: 1px solid var(--dpt-border);
+}
+
+#dpt-panel .dpt-since {
+  color: var(--dpt-fg-sub);
+  font-size: 11px;
+}
+
+#dpt-panel .dpt-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+#dpt-panel .dpt-links-center {
+  justify-content: center;
+  margin-bottom: 14px;
+}
+
+#dpt-panel .dpt-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border: 1px solid var(--dpt-border);
+  border-radius: 6px;
+  color: var(--dpt-fg);
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+#dpt-panel .dpt-link:hover {
+  border-color: var(--dpt-accent);
+  color: var(--dpt-accent-text);
+}
+
+#dpt-panel .dpt-link-primary {
+  border-color: var(--dpt-accent-strong);
+  background: var(--dpt-accent-strong);
+  color: var(--dpt-on-accent);
+}
+
+#dpt-panel .dpt-link-primary:hover {
+  background: var(--dpt-accent-strong);
+  color: var(--dpt-on-accent);
+  opacity: 0.88;
+}
+
+#dpt-panel .dpt-disclosure {
+  color: var(--dpt-fg-sub);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+/* ── 更新のお知らせ ── */
+#dpt-panel .dpt-update {
+  display: block;
+  padding: 8px 14px;
+  border-top: 1px solid var(--dpt-border);
+  background: var(--dpt-accent-soft);
+  color: var(--dpt-accent-text);
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+/* ── 狭い画面 ── */
+@media (max-width: 600px) {
+  #dpt-panel .dpt-chart-box {
+    --dpt-chart-h: 180px;
+  }
+
+  #dpt-panel .dpt-current {
+    font-size: 18px;
+  }
+}

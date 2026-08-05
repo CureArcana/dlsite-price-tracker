@@ -1,0 +1,9 @@
+# 拡張IDの元になる公開鍵。manifest.json の "key" に転記済みなので、
+# リポジトリに二重で置く必要はない（秘密鍵は生成時に破棄している）。
+.extension_key.txt
+
+# 配布用 ZIP のビルド先
+dist/
+
+.DS_Store
+Thumbs.db
