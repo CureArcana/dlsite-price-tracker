@@ -2,7 +2,7 @@
  * DLsite Price Tracker — background service worker
  *
  * 役割:
- *   1. voicelabo.net API から価格履歴を取得する（host_permissions 経由なので CORS 不要）
+ *   1. voice-labo.com API から価格履歴を取得する（host_permissions 経由なので CORS 不要）
  *   2. 取得結果を chrome.storage.local に 6 時間キャッシュする
  *   3. GitHub Releases の最新版を 1 日 1 回確認する（ストア配布ではないため自動更新が無い）
  *
@@ -10,7 +10,9 @@
  * DLsite のページ origin から外部 API を叩くと CORS に阻まれるため。
  */
 
-const API_BASE = "https://voicelabo.net/api/ext";
+// 2026-08-09 に voicelabo.net → voice-labo.com へ移転。旧ドメインは 410 Gone を返すため
+// ここを旧値のままにすると拡張が丸ごと沈黙する（v0.1.0 が実際にそうなっていた）。
+const API_BASE = "https://voice-labo.com/api/ext";
 const RELEASES_API = "https://api.github.com/repos/CureArcana/dlsite-price-tracker/releases/latest";
 const RELEASES_PAGE = "https://github.com/CureArcana/dlsite-price-tracker/releases/latest";
 

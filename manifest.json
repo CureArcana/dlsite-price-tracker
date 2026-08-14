@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
   "name": "DLsite Price Tracker",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "DLsite の作品ページに、価格と割引の推移グラフを表示します。今が買い時かどうかが一目で分かります。",
-  "author": "VoiceLaboratory (voicelabo.net)",
+  "author": "VoiceLaboratory (voice-labo.com)",
   "homepage_url": "https://github.com/CureArcana/dlsite-price-tracker",
 
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArFFAp/AxLlnG+4GiT2vii3MtL+Nl8XbYsR0i+KlhCvMPnTfl8n0b8mOQYs86oujkkrST3u5H2VxqEhJN3v7bEuO2zb+iQrXpfDbzyaLIG6Y10lcWTEI248Hug4S0NWgaPCIEXKIk+lpiuhprq2JT7ZCKdpLd0GWsGD1fUJE10Jyro7OIi/sTGW+qxM75iK46SR2lGfWjP8ZM2IjfVS+XzgXGBEeO/K0xymI+KwZJAAL+l96Cg416wbU+pjdrgRXNZuz3xlnmlj26xu6nIDNtMwXil81I4Pp9WRmV4xSmYgJEvd4FBxiz8ygpuR1OY4KltlaRfZ1TPZ5ZLcUqcV81WQIDAQAB",
@@ -18,7 +18,7 @@
   "permissions": ["storage"],
 
   "host_permissions": [
-    "https://voicelabo.net/*",
+    "https://voice-labo.com/*",
     "https://api.github.com/*"
   ],
 

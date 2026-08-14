@@ -350,7 +350,7 @@
         body,
         "この作品はまだ計測対象外です",
         "ボイラボが日次で取得している作品のみ表示されます。新作は数日で対象になります。",
-        { href: "https://voicelabo.net/", text: "ボイラボで作品を探す" },
+        { href: "https://voice-labo.com/", text: "ボイラボで作品を探す" },
       );
       return;
     }
