@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DLsite Price Tracker — お気に入りバーのプレビュー</title>
+<!-- 実ページと同じ判定を通すため、URL に mypage/wishlist を含める必要がある。
+     history.replaceState でパスを差し替える（相対パスの解決先も変わるので、
+     スクリプトは全部ルート絶対パスで書くこと。v0.1.0 で 404 を出した罠）。 -->
+<script>history.replaceState({}, "", "/maniax/mypage/wishlist");</script>
+<style>
+  body { margin:0; padding:24px; font-family:"Hiragino Sans",Meiryo,system-ui,sans-serif;
+         background:#fff; color:#1f2937; }
+  h1 { font-size:16px; }
+  .note { color:#6b7280; font-size:12px; max-width:52em; }
+  #main_inner { margin-top:16px; }
+  .row { display:flex; gap:10px; padding:8px 0; border-bottom:1px solid #eee; align-items:center; }
+  .row img { width:56px; height:42px; background:#dfe6e3; }
+  .work_name a { color:#1f2937; font-size:13px; }
+  @media (prefers-color-scheme: dark) {
+    body { background:#101215; color:#e5e7eb; }
+    .work_name a { color:#e5e7eb; }
+    .row { border-color:#2c3237; }
+  }
+</style>
+</head>
+<body>
+<h1>お気に入りバーのプレビュー</h1>
+<p class="note">
+  DLsite のお気に入りページを模した DOM に、<code>src/content/wishlist-page.js</code> を
+  そのまま読み込んでいます。<code>harvestWorks()</code> が作品ID とタイトルを拾えるか、
+  一括追加が効くかをここで確かめます。
+</p>
+
+<div id="main_inner">
+  <div class="row">
+    <img alt="">
+    <div class="work_name"><a href="/maniax/work/=/product_id/RJ01509966.html">【ASMR】甘やかし上手なメイドさんはあなたの疲れた心と体を癒したい【KU100】</a></div>
+  </div>
+  <div class="row">
+    <img alt="">
+    <div class="work_name"><a href="/maniax/work/=/product_id/RJ01234567.html">耳元でささやく彼女の日常【バイノーラル】</a></div>
+  </div>
+  <div class="row">
+    <img alt="">
+    <div class="work_name"><a href="/maniax/work/=/product_id/RJ01111111.html">添い寝ボイス 総集編</a></div>
+  </div>
+  <!-- 一覧カードの data 属性からも拾えることの確認 -->
+  <li class="search_result_img_box_inner" data-list_item_product_id="RJ02222222">睡眠導入ASMR</li>
+</div>
+
+<script src="/dev/chrome-stub.js"></script>
+<script src="/src/lib/dom.js"></script>
+<script src="/src/lib/watchlist.js"></script>
+<script src="/src/content/wishlist-page.js"></script>
+<link rel="stylesheet" href="/src/content/panel.css">
+</body>
+</html>

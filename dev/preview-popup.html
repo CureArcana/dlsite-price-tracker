@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DLsite Price Tracker — ウォッチリスト画面のプレビュー</title>
+<style>
+  body { margin:0; font-family:"Hiragino Sans",Meiryo,system-ui,sans-serif; }
+  #dev-note { padding:12px 16px; background:#f7f9f8; color:#6b7280; font-size:12px;
+              border-bottom:1px solid #e3e8e6; }
+  #dev-note code { color:#0a7d4f; }
+  #dev-note button { margin-left:8px; font: inherit; }
+  @media (prefers-color-scheme: dark) {
+    #dev-note { background:#1d2125; color:#9ca3af; border-color:#2c3237; }
+  }
+</style>
+</head>
+<body>
+<div id="dev-note">
+  <code>src/popup/popup.html</code> をそのまま読み込んでいます（<code>chrome.*</code> はスタブ）。
+  <button type="button" id="dev-seed">サンプル3件を入れて再読み込み</button>
+</div>
+
+<!-- popup 本体をここに展開する -->
+<div id="dev-host"></div>
+
+<script src="/dev/chrome-stub.js"></script>
+<script>
+/**
+ * popup.html を「実ファイルのまま」動かすための読み込み器。
+ *
+ * popup.html を複製すると本体と乖離するので、fetch して DOM に流し込む。
+ * 相対パス（popup.css / ../lib/watchlist.js）はここでは解決できないため、
+ * /src/popup/ 起点のルート絶対パスに書き換えてから差し込む。
+ */
+(async () => {
+  const BASE = "/src/popup/";
+  const abs = (p) => new URL(p, location.origin + BASE).pathname;
+
+  document.getElementById("dev-seed").addEventListener("click", async () => {
+    await chrome.storage.local.set({
+      watchlist: {
+        RJ01509966: { id: "RJ01509966", title: "【ASMR】甘やかし上手なメイドさんはあなたの疲れた心と体を癒したい【KU100】", addedAt: Date.now() - 86400000, rule: { mode: "lowest", price: null, rate: null }, notified: null, lastSeen: { price: 423, rate: 45, at: Date.now() - 3600000 } },
+        RJ01234567: { id: "RJ01234567", title: "耳元でささやく彼女の日常【バイノーラル】", addedAt: Date.now() - 3600000, rule: { mode: "both", price: 400, rate: 60 }, notified: { price: 380, at: Date.now() - 7200000 }, lastSeen: { price: 380, rate: 62, at: Date.now() - 7200000 } },
+        RJ01111111: { id: "RJ01111111", title: null, addedAt: Date.now(), rule: { mode: "price", price: 550, rate: null }, notified: null, lastSeen: null },
+      },
+      watchCheck: { at: Date.now() - 1800000, checked: 3, hits: 1 },
+    });
+    location.reload();
+  });
+
+  const html = await (await fetch(BASE + "popup.html")).text();
+  const doc = new DOMParser().parseFromString(html, "text/html");
+
+  doc.querySelectorAll('link[rel="stylesheet"]').forEach((l) => {
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = abs(l.getAttribute("href"));
+    document.head.appendChild(link);
+  });
+
+  const scripts = [...doc.querySelectorAll("script")].map((s) => s.getAttribute("src"));
+  doc.querySelectorAll("script").forEach((s) => s.remove());
+  document.getElementById("dev-host").innerHTML = doc.body.innerHTML;
+
+  // innerHTML で入れた <script> は実行されないので、順番に貼り直す。
+  for (const src of scripts) {
+    await new Promise((resolve) => {
+      const el = document.createElement("script");
+      el.src = abs(src);
+      el.onload = el.onerror = resolve;
+      document.body.appendChild(el);
+    });
+  }
+})();
+</script>
+</body>
+</html>

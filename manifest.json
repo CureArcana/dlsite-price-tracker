@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "DLsite Price Tracker",
-  "version": "0.1.1",
-  "description": "DLsite の作品ページに、価格と割引の推移グラフを表示します。今が買い時かどうかが一目で分かります。",
+  "version": "0.2.0",
+  "description": "DLsite の作品ページに価格と割引の推移グラフを表示し、狙った価格まで下がったら通知します。今が買い時かどうかが一目で分かります。",
   "author": "VoiceLaboratory (voice-labo.com)",
   "homepage_url": "https://github.com/CureArcana/dlsite-price-tracker",
 
@@ -15,16 +15,26 @@
     "128": "icons/icon128.png"
   },
 
-  "permissions": ["storage"],
+  "permissions": ["storage", "alarms", "notifications"],
 
   "host_permissions": [
     "https://voice-labo.com/*",
     "https://api.github.com/*"
   ],
 
+  "action": {
+    "default_title": "DLsite Price Tracker",
+    "default_popup": "src/popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+
   "background": {
-    "service_worker": "src/background/service-worker.js",
-    "type": "module"
+    "service_worker": "src/background/service-worker.js"
   },
 
   "content_scripts": [
@@ -37,7 +47,18 @@
         "src/lib/dom.js",
         "src/lib/format.js",
         "src/lib/chart.js",
+        "src/lib/watchlist.js",
         "src/content/work-page.js"
+      ],
+      "css": ["src/content/panel.css"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://www.dlsite.com/*/mypage/wishlist*"],
+      "js": [
+        "src/lib/dom.js",
+        "src/lib/watchlist.js",
+        "src/content/wishlist-page.js"
       ],
       "css": ["src/content/panel.css"],
       "run_at": "document_idle"

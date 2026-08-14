@@ -39,5 +39,60 @@ globalThis.DPT_DOM = (() => {
     return Boolean(productIdFromUrl()) && !location.pathname.includes("/announce/");
   }
 
-  return { productIdFromUrl, findAnchor, isTrackablePage };
+  /** お気に入り（欲しいものリスト）ページかどうか。全年齢サイト /home/ 側も同じ構造。 */
+  function isWishlistPage() {
+    return /\/(maniax|home|girls|girls-pro|pro|eco|app)\/mypage\/wishlist/.test(location.pathname);
+  }
+
+  /**
+   * ページ内の作品を総ざらいして [{ id, title }] を返す。
+   *
+   * お気に入りページの DOM は将来変わりうるので、**特定のクラス名に依存しない**。
+   * 「product_id を含むリンク」と「data 属性」の 2 系統から拾い、
+   * タイトルはリンク周辺から取れたものを使う（取れなくても ID だけで機能する）。
+   *
+   * これは DLsite への追加リクエストを 1 本も出さない。
+   * ユーザーが自分で開いたページの DOM を読むだけなので、スクレイピングではない。
+   */
+  function harvestWorks(root = document) {
+    const found = new Map();
+
+    const remember = (rawId, title) => {
+      if (!rawId) return;
+      const id = String(rawId).toUpperCase();
+      if (!/^RJ\d+$/.test(id)) return;
+      const clean = (title || "").replace(/\s+/g, " ").trim();
+      const prev = found.get(id);
+      // タイトルは長いほうが本文らしい（「続きを読む」等の短い誤爆を避ける）
+      if (!prev || (clean && clean.length > (prev.title || "").length)) {
+        found.set(id, { id, title: clean || prev?.title || null });
+      }
+    };
+
+    /** リンクから作品名らしい文字列を探す。 */
+    const titleNear = (a) => {
+      const own = (a.getAttribute("title") || a.textContent || "").trim();
+      if (own.length > 3) return own;
+      const img = a.querySelector("img[alt]");
+      if (img && img.alt.trim().length > 3) return img.alt;
+      // 同じ行（li / tr / .n_worklist_item 等）の中の作品名要素を探す
+      const row = a.closest("li, tr, [class*=worklist], [class*=work_item], [class*=search_result]");
+      const named = row?.querySelector('[class*="work_name"], [class*="title"]');
+      const t = (named?.textContent || "").trim();
+      return t.length > 3 ? t : own;
+    };
+
+    root.querySelectorAll('a[href*="/product_id/RJ"]').forEach((a) => {
+      const m = a.getAttribute("href").match(/\/product_id\/(RJ\d+)/i);
+      if (m) remember(m[1], titleNear(a));
+    });
+
+    root.querySelectorAll("[data-list_item_product_id]").forEach((el) => {
+      remember(el.getAttribute("data-list_item_product_id"), el.textContent);
+    });
+
+    return [...found.values()];
+  }
+
+  return { productIdFromUrl, findAnchor, isTrackablePage, isWishlistPage, harvestWorks };
 })();
