@@ -11,6 +11,7 @@
   const DOM = globalThis.DPT_DOM;
   const F = globalThis.DPT_FORMAT;
   const CHART = globalThis.DPT_CHART;
+  const WL = globalThis.DPT_WATCHLIST;
 
   const PANEL_ID = "dpt-panel";
   const STORE_KEYS = { collapsed: "ui:collapsed", showList: "ui:showList", period: "ui:period" };
@@ -33,6 +34,15 @@
       '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" ' +
       'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
       '<path d="M14 4h6v6"/><path d="M20 4l-8 8"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>',
+    bell:
+      '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" ' +
+      'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+      '<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>',
+    bellOn:
+      '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" stroke="currentColor" stroke-width="2" ' +
+      'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+      '<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>' +
+      '<path d="M13.7 21a2 2 0 0 1-3.4 0" fill="none"/></svg>',
   };
 
   const store = {
@@ -116,6 +126,191 @@
       wrap.appendChild(a);
       body.appendChild(wrap);
     }
+  }
+
+  /**
+   * 「安くなったら通知」バー。
+   *
+   * ウォッチリストは端末内（chrome.storage.local）にしか置かない。
+   * サーバーに預けないので、ログインもアカウント作成も要らない。
+   */
+  function buildAlertBar(data) {
+    const productId = data.product_id;
+    const wrap = document.createElement("div");
+    wrap.className = "dpt-alert";
+
+    const row = document.createElement("div");
+    row.className = "dpt-alert-row";
+    const form = document.createElement("div");
+    form.className = "dpt-alert-form";
+    form.hidden = true;
+    wrap.append(row, form);
+
+    // 条件フォームの初期値。過去最安を狙う人が一番多いので、そこを既定に置く。
+    const suggestPrice = Number(data.stats.min) || Number(data.stats.current) || null;
+    let draft = { mode: "lowest", price: suggestPrice, rate: 50 };
+
+    function say(message, tone = "") {
+      const note = document.createElement("div");
+      note.className = `dpt-alert-note${tone ? ` dpt-alert-note-${tone}` : ""}`;
+      note.textContent = message;
+      note.setAttribute("role", "status");
+      return note;
+    }
+
+    async function paint() {
+      const entry = await WL.get(productId);
+      row.innerHTML = "";
+
+      if (!entry) {
+        const add = document.createElement("button");
+        add.type = "button";
+        add.className = "dpt-alert-btn dpt-alert-btn-primary";
+        add.innerHTML = `${ICONS.bell}<span>安くなったら通知</span>`;
+        add.addEventListener("click", () => openForm(null));
+        row.appendChild(add);
+        row.appendChild(say("通知の設定はこの端末内だけに保存されます"));
+        return;
+      }
+
+      const state = document.createElement("span");
+      state.className = "dpt-alert-on";
+      state.innerHTML = `${ICONS.bellOn}<span>通知オン</span>`;
+
+      const desc = document.createElement("span");
+      desc.className = "dpt-alert-desc";
+      desc.textContent = WL.describeRule(entry.rule);
+
+      const edit = document.createElement("button");
+      edit.type = "button";
+      edit.className = "dpt-alert-btn";
+      edit.textContent = "条件を変更";
+      edit.addEventListener("click", () => openForm(entry.rule));
+
+      const off = document.createElement("button");
+      off.type = "button";
+      off.className = "dpt-alert-btn dpt-alert-btn-quiet";
+      off.textContent = "解除";
+      off.addEventListener("click", async () => {
+        await WL.remove(productId);
+        form.hidden = true;
+        paint();
+      });
+
+      row.append(state, desc, edit, off);
+
+      if (entry.notified?.price) {
+        row.appendChild(
+          say(`${Number(entry.notified.price).toLocaleString("ja-JP")}円で通知済み（さらに安くなったら再通知）`),
+        );
+      }
+    }
+
+    function openForm(rule) {
+      if (rule) draft = { ...WL.normalizeRule(rule) };
+      if (draft.price === null) draft.price = suggestPrice;
+      if (draft.rate === null) draft.rate = 50;
+
+      form.hidden = false;
+      form.innerHTML = "";
+
+      const modeLabel = document.createElement("label");
+      modeLabel.className = "dpt-field";
+      const modeSelect = document.createElement("select");
+      modeSelect.className = "dpt-select";
+      WL.MODES.forEach((m) => {
+        const o = document.createElement("option");
+        o.value = m;
+        o.textContent = WL.MODE_LABELS[m];
+        modeSelect.appendChild(o);
+      });
+      modeSelect.value = draft.mode;
+      modeLabel.append(Object.assign(document.createElement("span"), { textContent: "通知する条件" }), modeSelect);
+
+      const priceLabel = document.createElement("label");
+      priceLabel.className = "dpt-field";
+      const priceInput = document.createElement("input");
+      Object.assign(priceInput, { type: "number", min: "1", step: "1", value: String(draft.price ?? "") });
+      priceInput.className = "dpt-input";
+      priceInput.inputMode = "numeric";
+      priceLabel.append(
+        Object.assign(document.createElement("span"), { textContent: "金額（円以下）" }),
+        priceInput,
+      );
+
+      const rateLabel = document.createElement("label");
+      rateLabel.className = "dpt-field";
+      const rateInput = document.createElement("input");
+      Object.assign(rateInput, { type: "number", min: "1", max: "99", step: "1", value: String(draft.rate ?? "") });
+      rateInput.className = "dpt-input";
+      rateInput.inputMode = "numeric";
+      rateLabel.append(
+        Object.assign(document.createElement("span"), { textContent: "割引率（%OFF 以上）" }),
+        rateInput,
+      );
+
+      const actions = document.createElement("div");
+      actions.className = "dpt-alert-actions";
+      const save = document.createElement("button");
+      save.type = "button";
+      save.className = "dpt-alert-btn dpt-alert-btn-primary";
+      save.textContent = "この条件で通知する";
+      const cancel = document.createElement("button");
+      cancel.type = "button";
+      cancel.className = "dpt-alert-btn dpt-alert-btn-quiet";
+      cancel.textContent = "キャンセル";
+      actions.append(save, cancel);
+
+      const hint = document.createElement("div");
+      hint.className = "dpt-alert-note";
+
+      form.append(modeLabel, priceLabel, rateLabel, actions, hint);
+
+      /** モードに関係ない入力欄は隠す。使わない値を尋ねると迷わせる。 */
+      function syncFields() {
+        const m = modeSelect.value;
+        priceLabel.hidden = !(m === "price" || m === "both" || m === "either");
+        rateLabel.hidden = !(m === "rate" || m === "both" || m === "either");
+        const now = Number(data.stats.current);
+        hint.textContent =
+          m === "lowest"
+            ? `現在の過去最安は ${F.yen(data.stats.min)} です。これを下回ったら通知します`
+            : `現在の販売価格は ${F.yen(now)}（${data.stats.discount_rate || 0}%OFF）です`;
+      }
+      modeSelect.addEventListener("change", syncFields);
+      syncFields();
+
+      cancel.addEventListener("click", () => {
+        form.hidden = true;
+      });
+
+      save.addEventListener("click", async () => {
+        const rule = WL.normalizeRule({
+          mode: modeSelect.value,
+          price: priceInput.value,
+          rate: rateInput.value,
+        });
+        // 入力が空のまま金額モードを選ぶと normalizeRule が既定へ落とす。黙って
+        // 「過去最安」に変わると裏切りになるので、その場で知らせて止める。
+        if (rule.mode !== modeSelect.value) {
+          hint.textContent = "金額または割引率を入力してください";
+          hint.classList.add("dpt-alert-note-warn");
+          return;
+        }
+        draft = { ...rule };
+        const res = await WL.put(productId, { title: data.title, rule });
+        if (!res.ok && res.reason === "full") {
+          hint.textContent = `ウォッチリストは最大 ${res.max} 件です。不要なものを解除してください`;
+          hint.classList.add("dpt-alert-note-warn");
+          return;
+        }
+        form.hidden = true;
+        paint();
+      });
+    }
+
+    paint();
+    return wrap;
   }
 
   async function renderData(body, data) {
@@ -303,7 +498,7 @@
       "「DLsite で見る」はアフィリエイトリンクです。価格は日次観測にもとづく参考値で、" +
       "実際の販売価格は DLsite の表示が正となります。";
 
-    footer.append(since, links, disclosure);
+    footer.append(buildAlertBar(data), since, links, disclosure);
 
     draw();
   }

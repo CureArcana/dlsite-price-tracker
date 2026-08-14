@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 import zipfile
 
@@ -36,7 +37,25 @@ def referenced_paths(manifest: dict) -> list[str]:
         paths.append(bg["service_worker"])
     for cs in manifest.get("content_scripts", []):
         paths += cs.get("js", []) + cs.get("css", [])
+    action = manifest.get("action", {})
+    if action.get("default_popup"):
+        paths.append(action["default_popup"])
+    paths += list(action.get("default_icon", {}).values())
     return paths
+
+
+def importscripts_paths(sw_rel: str) -> list[str]:
+    """service worker が importScripts で読むファイルを拾う。
+
+    ES モジュールを使わず importScripts にしているため、manifest からは辿れない。
+    ここが欠けると拡張が起動時に丸ごと死ぬので、ZIP を作る前に実在を確かめる。
+    """
+    full = os.path.join(ROOT, sw_rel)
+    if not os.path.isfile(full):
+        return []
+    with open(full, encoding="utf-8") as f:
+        src = f.read()
+    return [p.lstrip("/") for p in re.findall(r'importScripts\(\s*["\']([^"\']+)["\']', src)]
 
 
 def validate(manifest: dict) -> list[str]:
@@ -54,12 +73,44 @@ def validate(manifest: dict) -> list[str]:
         if not os.path.isfile(os.path.join(ROOT, rel)):
             errors.append(f"manifest が参照しているファイルが無い: {rel}")
 
-    # content script は globalThis 経由で受け渡すので、読み込み順が崩れると壊れる
+    sw = manifest.get("background", {}).get("service_worker")
+    if sw:
+        if manifest["background"].get("type") == "module":
+            errors.append("service_worker が type:module。importScripts が使えなくなる")
+        for rel in importscripts_paths(sw):
+            if not os.path.isfile(os.path.join(ROOT, rel)):
+                errors.append(f"service worker の importScripts 先が無い: {rel}")
+
+    # content script は globalThis 経由で受け渡すので、lib が後ろに来ると壊れる。
+    # 使うライブラリの組み合わせはスクリプトごとに違うため、順序ではなく
+    # 「lib が content より前」「使っている lib が全部入っている」を見る。
+    provides = {
+        "src/lib/dom.js": "DPT_DOM",
+        "src/lib/format.js": "DPT_FORMAT",
+        "src/lib/chart.js": "DPT_CHART",
+        "src/lib/watchlist.js": "DPT_WATCHLIST",
+    }
     for cs in manifest.get("content_scripts", []):
         js = cs.get("js", [])
-        order = ["src/lib/dom.js", "src/lib/format.js", "src/lib/chart.js", "src/content/work-page.js"]
-        if js and js != order:
-            errors.append(f"content_scripts の読み込み順が想定と違う: {js}")
+        libs = [p for p in js if p.startswith("src/lib/")]
+        entries = [p for p in js if not p.startswith("src/lib/")]
+        if libs and entries and js.index(libs[-1]) > js.index(entries[0]):
+            errors.append(f"content_scripts の読み込み順が不正（lib は content より前）: {js}")
+        for entry in entries:
+            full = os.path.join(ROOT, entry)
+            if not os.path.isfile(full):
+                continue
+            with open(full, encoding="utf-8") as f:
+                body = f.read()
+            for lib, symbol in provides.items():
+                if f"globalThis.{symbol}" in body and lib not in js:
+                    errors.append(f"{entry} が {symbol} を使うのに {lib} が読み込まれていない")
+
+    # 通知・定期実行を使うなら権限が要る。宣言漏れは実行時まで気づけない。
+    perms = set(manifest.get("permissions", []))
+    for need in ("storage", "alarms", "notifications"):
+        if need not in perms:
+            errors.append(f'permissions に "{need}" が無い')
 
     # host_permissions に DLsite を含めない（拡張から DLsite へ通信しない方針）
     for host in manifest.get("host_permissions", []):

@@ -5,7 +5,10 @@
  * 逆にこちらのスタイルが DLsite 側へ漏れないよう、セレクタは必ず #dpt-panel 配下に閉じる。
  */
 
-#dpt-panel {
+/* お気に入りページの取り込みバー（#dpt-import）も同じトークンと外枠を使う。
+   別々に持つと配色が将来ずれるので、変数の定義元は 1 か所にまとめておく。 */
+#dpt-panel,
+#dpt-import {
   --dpt-accent: #10b981;
   --dpt-accent-soft: rgba(16, 185, 129, 0.14);
   --dpt-accent-text: #0a7d4f;
@@ -42,7 +45,8 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  #dpt-panel {
+  #dpt-panel,
+  #dpt-import {
     --dpt-accent: #12c98a;
     --dpt-accent-soft: rgba(18, 201, 138, 0.16);
     --dpt-accent-text: #34d399;
@@ -501,6 +505,194 @@
   text-decoration: none;
 }
 
+/* ── 価格アラート（作品ページのパネル内 / お気に入りページの取り込みバー共通） ── */
+#dpt-panel .dpt-alert {
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--dpt-border);
+  border-radius: 8px;
+  background: var(--dpt-bg-sub);
+}
+
+#dpt-panel .dpt-alert-row,
+#dpt-import .dpt-import-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+#dpt-panel .dpt-alert-btn,
+#dpt-import .dpt-alert-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 6px 12px;
+  border: 1px solid var(--dpt-border);
+  border-radius: 6px;
+  background: var(--dpt-bg);
+  color: var(--dpt-fg);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+#dpt-panel .dpt-alert-btn:hover,
+#dpt-import .dpt-alert-btn:hover {
+  border-color: var(--dpt-accent);
+  color: var(--dpt-accent-text);
+}
+
+#dpt-panel .dpt-alert-btn-primary,
+#dpt-import .dpt-alert-btn-primary {
+  border-color: var(--dpt-accent-strong);
+  background: var(--dpt-accent-strong);
+  color: var(--dpt-on-accent);
+}
+
+/* 塗りボタンは hover でも文字色を変えない。--dpt-accent-text は塗りの上だと
+   コントラストが 2 台まで落ちる（--dpt-on-accent と対で使うのが前提の色）。 */
+#dpt-panel .dpt-alert-btn-primary:hover,
+#dpt-import .dpt-alert-btn-primary:hover {
+  border-color: var(--dpt-accent-strong);
+  background: var(--dpt-accent-strong);
+  color: var(--dpt-on-accent);
+  opacity: 0.88;
+}
+
+#dpt-panel .dpt-alert-btn-quiet,
+#dpt-import .dpt-alert-btn-quiet {
+  border-color: transparent;
+  background: transparent;
+  color: var(--dpt-fg-sub);
+  font-weight: 400;
+}
+
+#dpt-panel .dpt-alert-btn:disabled,
+#dpt-import .dpt-alert-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+#dpt-panel .dpt-alert-btn:focus-visible,
+#dpt-import .dpt-alert-btn:focus-visible {
+  outline: 2px solid var(--dpt-accent);
+  outline-offset: 2px;
+}
+
+#dpt-panel .dpt-alert-on {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--dpt-accent-text);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+#dpt-panel .dpt-alert-desc {
+  flex: 1 1 auto;
+  color: var(--dpt-fg);
+  font-size: 12px;
+}
+
+#dpt-panel .dpt-alert-note,
+#dpt-import .dpt-alert-note {
+  flex: 1 1 100%;
+  color: var(--dpt-fg-sub);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+#dpt-panel .dpt-alert-note-warn {
+  color: #b45309;
+  font-weight: 700;
+}
+
+#dpt-panel .dpt-alert-form {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--dpt-border);
+}
+
+#dpt-panel .dpt-field {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+#dpt-panel .dpt-field > span {
+  flex: 0 0 132px;
+  color: var(--dpt-fg-sub);
+}
+
+#dpt-panel .dpt-select,
+#dpt-panel .dpt-input {
+  flex: 1 1 140px;
+  min-width: 0;
+  max-width: 260px;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 5px 8px;
+  border: 1px solid var(--dpt-border);
+  border-radius: 6px;
+  background: var(--dpt-bg);
+  color: var(--dpt-fg);
+  font: inherit;
+  font-size: 12px;
+}
+
+#dpt-panel .dpt-input {
+  max-width: 120px;
+}
+
+#dpt-panel .dpt-select:focus-visible,
+#dpt-panel .dpt-input:focus-visible {
+  outline: 2px solid var(--dpt-accent);
+  outline-offset: 1px;
+}
+
+#dpt-panel .dpt-alert-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* display:flex / grid はブラウザ既定の [hidden]{display:none} に勝ってしまう。
+   明示しないと畳んだはずのフォームと使わない入力欄が残る（v0.1.0 でも踏んだ罠）。 */
+#dpt-panel .dpt-alert-form[hidden],
+#dpt-panel .dpt-field[hidden],
+#dpt-panel .dpt-alert-row[hidden],
+#dpt-import .dpt-import-actions[hidden] {
+  display: none;
+}
+
+/* ── お気に入りページの一括取り込みバー ── */
+#dpt-import {
+  padding: 12px 14px;
+  font-size: 13px;
+}
+
+#dpt-import .dpt-import-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--dpt-accent-text);
+  font-size: 12px;
+}
+
+#dpt-import .dpt-import-msg {
+  margin: 4px 0 8px;
+  color: var(--dpt-fg);
+  font-size: 13px;
+  font-weight: 700;
+}
+
 /* ── 狭い画面 ── */
 @media (max-width: 600px) {
   #dpt-panel .dpt-chart-box {
@@ -509,5 +701,15 @@
 
   #dpt-panel .dpt-current {
     font-size: 18px;
+  }
+
+  /* ラベルと入力を縦に積む。132px のラベル幅を残すと入力欄が潰れる。 */
+  #dpt-panel .dpt-field > span {
+    flex: 1 1 100%;
+  }
+
+  #dpt-panel .dpt-input,
+  #dpt-panel .dpt-select {
+    max-width: none;
   }
 }
