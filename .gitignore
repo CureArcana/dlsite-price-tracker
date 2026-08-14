@@ -7,3 +7,6 @@ dist/
 
 .DS_Store
 Thumbs.db
+
+# ローカルのプレビュー起動設定（開発者ごとに違ってよい）
+.claude/
