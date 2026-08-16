@@ -8,7 +8,9 @@
 
 globalThis.DPT_CHART = (() => {
   const NS = "http://www.w3.org/2000/svg";
-  const PAD = { top: 14, right: 14, bottom: 26, left: 54 };
+  // right は割引率の右軸ラベル（例「60%」）が入る幅。割引が一度も無い作品では
+  // 右軸ごと描かないので、その分プロットを広げる（render 内で上書き）。
+  const PAD = { top: 14, right: 14, bottom: 26, left: 54, rightWithRate: 46 };
   const FALLBACK_W = 720;
 
   // viewBox は必ずコンテナの実 CSS ピクセル寸法に一致させる。
@@ -42,6 +44,16 @@ globalThis.DPT_CHART = (() => {
     return mag * 10;
   }
 
+  /**
+   * その日の割引率(%)。定価が無い・割引されていない日は 0 とみなす。
+   * 割引率は「販売価格の階段」と対になる第2の階段として右軸スケールで描く。
+   */
+  function rateOf(p) {
+    return typeof p.l === "number" && p.l > 0 && p.p < p.l
+      ? Math.round((1 - p.p / p.l) * 100)
+      : 0;
+  }
+
   function render(container, opts) {
     const { points, lastObserved, showListPrice = true } = opts;
     const F = globalThis.DPT_FORMAT;
@@ -49,8 +61,13 @@ globalThis.DPT_CHART = (() => {
     container.textContent = "";
     if (!points || points.length === 0) return null;
 
+    // 表示期間内に一度でも割引があるときだけ右軸と赤線を描く。
+    const maxRate = Math.max(...points.map(rateOf));
+    const hasRate = maxRate > 0;
+
     const { w: VIEW_W, h: VIEW_H } = measure(container);
-    const PLOT_W = VIEW_W - PAD.left - PAD.right;
+    const padRight = hasRate ? PAD.rightWithRate : PAD.right;
+    const PLOT_W = VIEW_W - PAD.left - padRight;
     const PLOT_H = VIEW_H - PAD.top - PAD.bottom;
 
     const firstDay = F.parseDay(points[0].d);
@@ -76,6 +93,11 @@ globalThis.DPT_CHART = (() => {
     const x = (day) => PAD.left + (F.dayDiff(day, firstDay) / totalDays) * PLOT_W;
     const y = (price) => PAD.top + PLOT_H - ((price - yMin) / ySpan) * PLOT_H;
 
+    // 右軸（割引率）。上端に少し余白を持たせてキリの良い10%刻みへ丸める。
+    // 100% を超える刻みは意味が無いのでクランプする。
+    const rateMax = Math.min(100, Math.max(20, Math.ceil((maxRate * 1.15) / 10) * 10));
+    const yr = (rate) => PAD.top + PLOT_H - (rate / rateMax) * PLOT_H;
+
     const svg = el("svg", {
       viewBox: `0 0 ${VIEW_W} ${VIEW_H}`,
       width: VIEW_W,
@@ -89,12 +111,23 @@ globalThis.DPT_CHART = (() => {
     const grid = el("g", { class: "dpt-grid" });
     for (let v = Math.ceil(yMin / step) * step; v <= yMax; v += step) {
       const yy = y(v);
-      grid.appendChild(el("line", { x1: PAD.left, y1: yy, x2: VIEW_W - PAD.right, y2: yy }));
+      grid.appendChild(el("line", { x1: PAD.left, y1: yy, x2: VIEW_W - padRight, y2: yy }));
       const label = el("text", { x: PAD.left - 8, y: yy + 4, class: "dpt-axis-y" });
       label.textContent = v.toLocaleString("ja-JP");
       grid.appendChild(label);
     }
     svg.appendChild(grid);
+
+    // ── 右軸ラベル（割引率）。罫線は左軸のものと混ざるので増やさず、値だけ置く ──
+    if (hasRate) {
+      const rateAxis = el("g", { class: "dpt-axis-rate" });
+      for (const v of [0, rateMax / 2, rateMax]) {
+        const label = el("text", { x: VIEW_W - padRight + 8, y: yr(v) + 4 });
+        label.textContent = `${v}%`;
+        rateAxis.appendChild(label);
+      }
+      svg.appendChild(rateAxis);
+    }
 
     // ── 割引期間の帯 ──
     const bands = el("g", { class: "dpt-bands" });
@@ -111,6 +144,11 @@ globalThis.DPT_CHART = (() => {
       svg.appendChild(el("path", { d: stepPath(points, (p) => p.l, x, y, endDay), class: "dpt-line-list" }));
     }
 
+    // ── 割引率（赤・右軸スケール）。主役の販売価格より先に描いて背面に置く ──
+    if (hasRate) {
+      svg.appendChild(el("path", { d: stepPath(points, rateOf, x, yr, endDay), class: "dpt-line-rate" }));
+    }
+
     // ── 販売価格（実線） ──
     svg.appendChild(el("path", { d: stepPath(points, (p) => p.p, x, y, endDay), class: "dpt-line-price" }));
 
@@ -124,7 +162,7 @@ globalThis.DPT_CHART = (() => {
 
     // ── 日付ラベル ──
     const xAxis = el("g", { class: "dpt-axis-x" });
-    for (const d of dateTicks(firstDay, endDay)) {
+    for (const d of dateTicks(firstDay, endDay, PLOT_W)) {
       const t = el("text", { x: x(d), y: VIEW_H - 8 });
       t.textContent = `${d.getUTCMonth() + 1}/${d.getUTCDate()}`;
       xAxis.appendChild(t);
@@ -149,7 +187,7 @@ globalThis.DPT_CHART = (() => {
     tip.hidden = true;
     container.appendChild(tip);
 
-    attachHover({ container, svg, guide, tip, points, x, firstDay, totalDays, hasList, VIEW_W, PLOT_W });
+    attachHover({ container, svg, guide, tip, points, x, firstDay, totalDays, hasList, hasRate, VIEW_W, PLOT_W });
 
     // パネル幅が変わったら実寸に合わせて描き直す（viewBox は実寸と一致させる約束のため）。
     let lastW = VIEW_W;
@@ -162,7 +200,7 @@ globalThis.DPT_CHART = (() => {
     });
     ro.observe(container);
 
-    return { svg, disconnect: () => ro.disconnect() };
+    return { svg, hasRate, disconnect: () => ro.disconnect() };
   }
 
   /** 階段状のパス文字列を作る。値が無い点は前の値を引き継ぐ。 */
@@ -187,11 +225,17 @@ globalThis.DPT_CHART = (() => {
     return seg.join(" ");
   }
 
-  /** X軸のラベル位置を 4〜5 個選ぶ。 */
-  function dateTicks(first, end) {
+  /**
+   * X軸のラベル位置を選ぶ。本数はプロット幅と日数の両方に上限を持たせる。
+   * 全幅（1600px 級）に置かれたとき 5 個固定では間延びするため、
+   * 150px に 1 個を目安に増やす（最大 10 個）。
+   */
+  function dateTicks(first, end, plotW = 720) {
     const F = globalThis.DPT_FORMAT;
     const total = Math.max(F.dayDiff(end, first), 1);
-    const count = Math.min(5, Math.max(2, Math.floor(total / 14) + 1));
+    const byWidth = Math.min(10, Math.max(2, Math.floor(plotW / 150) + 1));
+    const byDays = Math.max(2, Math.floor(total / 14) + 1);
+    const count = Math.min(byWidth, byDays);
     const out = [];
     for (let i = 0; i < count; i += 1) {
       out.push(new Date(first.getTime() + Math.round((total * i) / (count - 1)) * 86400000));
@@ -206,16 +250,18 @@ globalThis.DPT_CHART = (() => {
     const min = Math.min(...prices);
     const max = Math.max(...prices);
     const current = prices[prices.length - 1];
+    const maxRate = Math.max(...points.map(rateOf));
     return (
       `${F.longDate(points[0].d)}から${F.longDate(lastObserved)}までの価格推移。` +
       `最安${F.yen(min)}、最高${F.yen(max)}、現在${F.yen(current)}。` +
-      `価格が変わった回数は${Math.max(points.length - 1, 0)}回。`
+      `価格が変わった回数は${Math.max(points.length - 1, 0)}回。` +
+      (maxRate > 0 ? `期間中の最大割引率は${maxRate}%。` : "")
     );
   }
 
   /** ホバーでガイド線とツールチップを出す。 */
   function attachHover(ctx) {
-    const { container, svg, guide, tip, points, x, firstDay, totalDays, hasList, VIEW_W, PLOT_W } = ctx;
+    const { container, svg, guide, tip, points, x, firstDay, totalDays, hasList, hasRate, VIEW_W, PLOT_W } = ctx;
     const F = globalThis.DPT_FORMAT;
 
     const hide = () => {
@@ -248,17 +294,18 @@ globalThis.DPT_CHART = (() => {
       guide.setAttribute("x2", gx);
       guide.setAttribute("opacity", 1);
 
-      const rate =
-        typeof active.l === "number" && active.l > 0 && active.p < active.l
-          ? Math.round((1 - active.p / active.l) * 100)
-          : null;
+      const rate = rateOf(active);
 
       const rows = [
         `<span class="dpt-tip-date">${F.longDate(iso)}</span>`,
         `<span class="dpt-tip-price">${F.yen(active.p)}</span>`,
       ];
+      // 割引率は赤線と同じ色の独立行にして、右軸と対応が取れるようにする。
+      if (hasRate && rate > 0) {
+        rows.push(`<span class="dpt-tip-rate">${rate}%OFF</span>`);
+      }
       if (hasList && typeof active.l === "number" && active.l !== active.p) {
-        rows.push(`<span class="dpt-tip-sub">定価 ${F.yen(active.l)}${rate !== null ? ` / ${rate}%OFF` : ""}</span>`);
+        rows.push(`<span class="dpt-tip-sub">定価 ${F.yen(active.l)}</span>`);
       }
       const end = F.endDateTime(active.de);
       if (active.dc && end) rows.push(`<span class="dpt-tip-sub">セール ${end} まで</span>`);

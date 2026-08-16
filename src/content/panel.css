@@ -23,6 +23,9 @@
   /* 割引帯は面積が広い（多くの作品でほぼ全期間が割引）。--dpt-accent-soft のままだと
      地と図が反転して「白い非割引期間」のほうが強調されて見えるので、専用に薄くする。 */
   --dpt-band: rgba(16, 185, 129, 0.075);
+  /* 割引率の線・右軸・凡例用の赤。白地に #dc2626 は 4.5:1 で、
+     テキスト（右軸ラベル）にも非テキスト（線 3:1）にも足りる。 */
+  --dpt-rate: #dc2626;
   --dpt-bg: #ffffff;
   --dpt-bg-sub: #f7f9f8;
   --dpt-fg: #1f2937;
@@ -55,6 +58,7 @@
     --dpt-on-accent: #06231a;
     --dpt-line: #12c98a;
     --dpt-band: rgba(18, 201, 138, 0.10);
+    --dpt-rate: #f87171;
     --dpt-bg: #16191c;
     --dpt-bg-sub: #1d2125;
     --dpt-fg: #e5e7eb;
@@ -66,6 +70,12 @@
 
 #dpt-panel * {
   box-sizing: border-box;
+}
+
+/* 挿入先（#work_header 直後）は本文カラムの全幅。パネル自身の幅を基準に
+   グラフ比率を変えられるよう、コンテナクエリの基点にする。 */
+#dpt-panel {
+  container-type: inline-size;
 }
 
 /* ── ヘッダ ── */
@@ -250,6 +260,14 @@
   margin: 0 0 10px;
 }
 
+/* 全幅（900px 超）に置かれた時は縦横比が寝すぎるので、グラフを一段高くする。
+   @container 非対応ブラウザではこのブロックが無視され 210px のまま（劣化なし）。 */
+@container (min-width: 900px) {
+  #dpt-panel .dpt-chart-box {
+    --dpt-chart-h: 260px;
+  }
+}
+
 #dpt-panel .dpt-chart {
   display: block;
   width: 100%;
@@ -294,6 +312,22 @@
   vector-effect: non-scaling-stroke;
 }
 
+/* 割引率（右軸スケール）。主役の販売価格より細くして主従を保つ */
+#dpt-panel .dpt-line-rate {
+  fill: none;
+  stroke: var(--dpt-rate);
+  stroke-width: 1.75;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  opacity: 0.9;
+}
+
+#dpt-panel .dpt-axis-rate text {
+  fill: var(--dpt-rate);
+  font-size: 10px;
+  text-anchor: start;
+}
+
 #dpt-panel .dpt-marks circle {
   fill: var(--dpt-line);
   stroke: var(--dpt-bg);
@@ -335,6 +369,12 @@
 
 #dpt-panel .dpt-tip-price {
   font-size: 15px;
+  font-weight: 700;
+}
+
+#dpt-panel .dpt-tip-rate {
+  color: var(--dpt-rate);
+  font-size: 11px;
   font-weight: 700;
 }
 
@@ -418,6 +458,10 @@
 
 #dpt-panel .dpt-swatch-price {
   background: var(--dpt-accent);
+}
+
+#dpt-panel .dpt-swatch-rate {
+  background: var(--dpt-rate);
 }
 
 #dpt-panel .dpt-swatch-list {

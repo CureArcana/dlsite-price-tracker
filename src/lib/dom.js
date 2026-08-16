@@ -15,13 +15,17 @@ globalThis.DPT_DOM = (() => {
 
   /**
    * パネルの差し込み位置。
-   * 購入ボタン（#work_buy_box_wrapper）より下、作品紹介（#work_parts_area）より上に置く。
-   * 購買動線を妨げず、かつスクロールで埋もれない位置。
+   * サンプル画像（#work_left）と作品情報テーブル（#work_outline）を包む
+   * #work_header の直後 = 本文カラムの全幅が使える位置に、横長で置く。
+   * 右カラム内（旧位置）は縦に細長く潰れるので、構造変更時の保険に格下げ。
    */
   const ANCHORS = [
-    { selector: "#work_outline", position: "beforebegin" },
-    { selector: ".work_parts_area", position: "beforebegin" },
+    { selector: "#work_header", position: "afterend" },
+    { selector: "#intro-title", position: "beforebegin" },
+    { selector: ".work_parts_container", position: "beforebegin" },
     { selector: "#work_parts_container", position: "beforebegin" },
+    { selector: ".work_parts_area", position: "beforebegin" },
+    { selector: "#work_outline", position: "beforebegin" },
     { selector: "#work_buy_box_wrapper", position: "afterend" },
     { selector: "#work_right", position: "beforeend" },
   ];

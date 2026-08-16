@@ -8,9 +8,23 @@
 <link rel="stylesheet" href="/src/content/panel.css">
 <style>
   body { margin: 0; padding: 24px; background: #f2f4f3; font-family: "Hiragino Sans", Meiryo, system-ui, sans-serif; color: #222; }
-  .wrap { max-width: 860px; margin: 0 auto; }
+  /* 実ページの本文カラム #main_inner は 1920px ビューポートで約 1635px */
+  .wrap { max-width: 1635px; margin: 0 auto; }
   .note { margin: 0 0 18px; padding: 10px 14px; border-left: 3px solid #10b981; background: #fff; font-size: 13px; line-height: 1.7; }
   .fake { padding: 14px; border: 1px dashed #c8d0cd; border-radius: 8px; background: #fff; color: #8a938f; font-size: 12px; }
+  /* 実ページの #work_header: 画像(#work_left)が float:left、情報(#work_right)が右 */
+  #work_header { overflow: hidden; }
+  #work_left { float: left; width: 50%; }
+  #work_left .fake { display: flex; align-items: center; justify-content: center; height: 420px; }
+  #work_right { margin-left: calc(50% + 20px); }
+  #work_right .fake { margin-bottom: 10px; }
+  #work_outline { width: 100%; border-collapse: collapse; font-size: 13px; }
+  #work_outline th, #work_outline td { padding: 6px 10px; border-bottom: 1px solid #e3e8e6; text-align: left; }
+  #intro-title { margin: 20px 0 12px; padding: 6px 10px; background: #e9edeb; font-size: 15px; font-weight: 700; }
+  @media (max-width: 900px) {
+    #work_left { float: none; width: auto; }
+    #work_right { margin-left: 0; margin-top: 16px; }
+  }
   .controls { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 18px; }
   .controls button { padding: 6px 12px; border: 1px solid #c8d0cd; border-radius: 6px; background: #fff; font: inherit; font-size: 12px; cursor: pointer; }
   h1 { margin: 0 0 6px; font-size: 18px; }
@@ -37,28 +51,43 @@
     <button type="button" data-state="error">取得失敗</button>
   </div>
 
-  <!-- ここから DLsite の骨格を模したもの。実ページのセレクタに合わせてある。 -->
-  <div id="work_buy_box_wrapper">
-    <div class="work_buy_main">
-      <div id="work_price">
-        <div class="work_buy_type"><div class="work_buy_container"><div class="work_buy_body">
-          <div class="work_buy_label">サークル設定価格</div>
-          <div class="work_buy_content">
-            <span class="strike"><span class="work_price_parts"><span class="work_price_base">770</span><span class="work_price_suffix">円</span></span></span>
+  <!-- ここから DLsite の骨格を模したもの。実ページのセレクタ・配置に合わせてある。
+       2026-08 実測: #work_header の中で #work_left(画像・左) と #work_right(情報・右) が
+       横並びになり、その下に #intro-title（作品内容）→ .work_parts_container が続く。
+       パネルは #work_header の直後（本文カラム全幅・横長）に入るのが正解。 -->
+  <div id="work_header">
+    <div id="work_left">
+      <div class="fake">（サンプル画像スライダーの位置）</div>
+    </div>
+    <div id="work_right">
+      <div class="work_right_info"><div class="fake">（ランキング・販売数・評価・サークル名の位置）</div></div>
+      <div id="work_right_inner">
+        <div id="work_buy_box_wrapper">
+          <div class="work_buy_main">
+            <div id="work_price">
+              <div class="work_buy_type"><div class="work_buy_container"><div class="work_buy_body">
+                <div class="work_buy_label">サークル設定価格</div>
+                <div class="work_buy_content">
+                  <span class="strike"><span class="work_price_parts"><span class="work_price_base">770</span><span class="work_price_suffix">円</span></span></span>
+                </div>
+              </div></div></div>
+            </div>
+            <div class="campaign_info">45%OFF 09/14 13:59 まで</div>
           </div>
-        </div></div></div>
+        </div>
+        <table id="work_outline"><tbody>
+          <tr><th>販売日</th><td>2025年12月03日</td></tr>
+          <tr><th>声優</th><td>かの仔</td></tr>
+          <tr><th>イラスト</th><td>（イラストレーター名）</td></tr>
+          <tr><th>ジャンル</th><td>ASMR / 耳かき / 癒し / バイノーラル</td></tr>
+        </tbody></table>
       </div>
-      <div class="campaign_info">45%OFF 09/14 13:59 まで</div>
+      <div class="trial_download"><div class="fake">（体験版ダウンロードの位置）</div></div>
     </div>
   </div>
 
-  <!-- パネルはこの #work_outline の直前に入るのが正解 -->
-  <table id="work_outline"><tbody>
-    <tr><th>販売日</th><td>2025年12月03日</td></tr>
-    <tr><th>声優</th><td>かの仔</td></tr>
-  </tbody></table>
-
-  <div class="work_parts_area" style="margin-top:16px">
+  <div id="intro-title" class="title_01">作品内容</div>
+  <div class="work_parts_container">
     <div class="fake">（作品紹介本文の位置）</div>
   </div>
 </div>
