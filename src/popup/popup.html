@@ -19,7 +19,16 @@
 
     <p class="status" id="status" role="status"></p>
 
-    <ul class="list" id="list"></ul>
+    <div class="filters">
+      <input type="search" id="q" class="search" placeholder="タイトルで絞り込み" aria-label="タイトルで絞り込み" />
+      <div class="chips" id="chips" role="group" aria-label="表示する登録の種類">
+        <button type="button" class="chip is-active" data-filter="all" aria-pressed="true">すべて</button>
+        <button type="button" class="chip" data-filter="discount" aria-pressed="false">割引中</button>
+        <button type="button" class="chip" data-filter="notified" aria-pressed="false">通知済み</button>
+      </div>
+    </div>
+
+    <ul class="grid" id="list"></ul>
 
     <p class="empty" id="empty" hidden>
       まだ登録がありません。<br />
@@ -27,10 +36,7 @@
       お気に入りページからまとめて追加することもできます。
     </p>
 
-    <footer class="foot">
-      <p>登録内容はこの端末内だけに保存されます。サーバーには作品IDしか送信しません。</p>
-      <p>価格は日次観測にもとづく参考値です。実際の販売価格は DLsite の表示が正となります。</p>
-    </footer>
+    <p class="empty" id="no-match" hidden>条件に合う登録がありません</p>
 
     <script src="../lib/watchlist.js"></script>
     <script src="popup.js"></script>

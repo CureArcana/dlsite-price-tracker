@@ -9,6 +9,7 @@
   --accent-text: #0a7d4f;
   --accent-strong: #0a7d4f;
   --on-accent: #ffffff;
+  --rate: #dc2626;
   --bg: #ffffff;
   --bg-sub: #f7f9f8;
   --fg: #1f2937;
@@ -23,6 +24,7 @@
     --accent-text: #34d399;
     --accent-strong: #12c98a;
     --on-accent: #06231a;
+    --rate: #f87171;
     --bg: #16191c;
     --bg-sub: #1d2125;
     --fg: #e5e7eb;
@@ -36,7 +38,7 @@
 }
 
 body {
-  width: 400px;
+  width: 640px;
   max-width: 100%;
   margin: 0;
   padding: 14px;
@@ -48,10 +50,10 @@ body {
 }
 
 /* 通知のまとめクリックからタブで開かれることもある。その時は横幅を広げる。 */
-@media (min-width: 560px) {
+@media (min-width: 700px) {
   body {
     width: auto;
-    max-width: 720px;
+    max-width: 960px;
     margin: 0 auto;
     padding: 24px;
   }
@@ -132,69 +134,231 @@ h1 {
   min-height: 1.6em;
 }
 
-.list {
+/* ── 絞り込み ── */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 10px;
+}
+
+.search {
+  flex: 1 1 180px;
+  min-width: 0;
+  margin: 0;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--fg);
+  font: inherit;
+  font-size: 12px;
+}
+
+.search:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.chips {
+  display: flex;
+  gap: 4px;
+}
+
+.chip {
+  margin: 0;
+  padding: 5px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--fg-sub);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.chip:hover {
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+
+.chip.is-active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-weight: 700;
+}
+
+.chip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* ── サムネイルのカードグリッド ── */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
   margin: 0;
   padding: 0;
   list-style: none;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  overflow: hidden;
 }
 
-.list:empty {
+.grid:empty {
   display: none;
 }
 
 .item {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 2px 10px;
-  padding: 9px 11px;
+  position: relative;
+  margin: 0;
+}
+
+.card {
+  display: block;
+  height: 100%;
+  border: 1px solid var(--border);
+  border-radius: 8px;
   background: var(--bg);
-}
-
-.item + .item {
-  border-top: 1px solid var(--border);
-}
-
-.item-title {
-  grid-column: 1;
   color: var(--fg);
+  text-decoration: none;
+  overflow: hidden;
+}
+
+.card:hover {
+  border-color: var(--accent);
+}
+
+.card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.thumb {
+  position: relative;
+  display: block;
+  aspect-ratio: 4 / 3;
+  background: var(--bg-sub);
+  overflow: hidden;
+}
+
+.thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* 画像が取れない作品（規則外URL・削除済み）は作品IDを出す */
+.thumb-fallback {
+  display: none;
+  position: absolute;
+  inset: 0;
+  align-items: center;
+  justify-content: center;
+  color: var(--fg-sub);
   font-size: 12px;
   font-weight: 700;
-  text-decoration: none;
-  /* 作品名は長い。2行で打ち切る */
+  letter-spacing: 0.04em;
+}
+
+.no-thumb .thumb img {
+  display: none;
+}
+
+.no-thumb .thumb-fallback {
+  display: flex;
+}
+
+.off {
+  position: absolute;
+  left: 6px;
+  bottom: 6px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--rate);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+@media (prefers-color-scheme: dark) {
+  .off {
+    color: #300a0a;
+  }
+}
+
+.meta {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 7px 9px 0;
+}
+
+.price {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.hit {
+  color: var(--accent-text);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.title {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   overflow: hidden;
-}
-
-.item-title:hover {
-  color: var(--accent-text);
-}
-
-.item-rule {
-  grid-column: 1;
-  color: var(--fg-sub);
-  font-size: 11px;
-}
-
-.item-seen {
-  grid-column: 1;
-  color: var(--fg-sub);
-  font-size: 11px;
-}
-
-.item-hit {
-  color: var(--accent-text);
+  padding: 1px 9px 0;
+  font-size: 12px;
   font-weight: 700;
+  line-height: 1.45;
 }
 
-.item-actions {
-  grid-column: 2;
-  grid-row: 1 / span 3;
-  align-self: center;
+.rule {
+  display: block;
+  padding: 2px 9px 8px;
+  color: var(--fg-sub);
+  font-size: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 解除。誤爆しないようカード右上の小さな丸に隔離し、ホバー/フォーカスで浮かせる */
+.remove {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(17, 24, 28, 0.55);
+  color: #ffffff;
+  cursor: pointer;
+  opacity: 0.55;
+}
+
+.item:hover .remove,
+.remove:focus-visible {
+  opacity: 1;
+}
+
+.remove:hover {
+  background: rgba(17, 24, 28, 0.8);
+}
+
+.remove:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }
 
 .empty {
@@ -209,17 +373,4 @@ h1 {
 
 .empty[hidden] {
   display: none;
-}
-
-.foot {
-  margin: 12px 0 0;
-  padding-top: 10px;
-  border-top: 1px solid var(--border);
-  color: var(--fg-sub);
-  font-size: 11px;
-  line-height: 1.5;
-}
-
-.foot p {
-  margin: 0 0 3px;
 }
