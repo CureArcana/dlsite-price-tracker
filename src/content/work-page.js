@@ -174,6 +174,9 @@
           // ウォッチリスト側へ価格・最安状態を出せるよう lastSeen も渡す。
           const current = Number(data.stats.current);
           const min = Number.isFinite(Number(data.stats.min)) ? Number(data.stats.min) : null;
+          // サムネは今見ているページの og:image をそのまま覚える（DLsite / FANZA 共通で
+          // 確実。次回の定期チェックからはサーバーが返す thumb で上書きされる）。
+          const og = document.querySelector('meta[property="og:image"]')?.content || null;
           const res = await WL.put(productId, {
             title: data.title,
             rule: null,
@@ -183,6 +186,7 @@
               list: Number.isFinite(Number(data.stats.list_price)) ? Number(data.stats.list_price) : null,
               min,
               lowest: data.stats.is_lowest_ever === true || (min !== null && current <= min),
+              thumb: og,
               at: Date.now(),
             },
           });

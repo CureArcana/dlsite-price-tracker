@@ -7,19 +7,31 @@
  */
 
 globalThis.DPT_DOM = (() => {
-  /** URL から product_id を取り出す。取れなければ null。 */
+  /**
+   * URL から product_id を取り出す。取れなければ null。
+   * DLsite は RJ 番号（大文字に正規化）、FANZA 同人は cid（d_〜、小文字に正規化）。
+   */
   function productIdFromUrl(href = location.href) {
-    const m = href.match(/\/product_id\/(RJ\d+)/i);
-    return m ? m[1].toUpperCase() : null;
+    let m = href.match(/\/product_id\/(RJ\d+)/i);
+    if (m) return m[1].toUpperCase();
+    m = href.match(/[/=]cid=(d_[a-z0-9_]+)/i);
+    if (m) return m[1].toLowerCase();
+    return null;
   }
 
   /**
-   * パネルの差し込み位置。
-   * サンプル画像（#work_left）と作品情報テーブル（#work_outline）を包む
+   * パネルの差し込み位置。ページには DLsite / FANZA どちらかのセレクタしか
+   * 存在しないため、1本の配列で上から順に試して構わない。
+   *
+   * DLsite: サンプル画像（#work_left）と作品情報テーブル（#work_outline）を包む
    * #work_header の直後 = 本文カラムの全幅が使える位置に、横長で置く。
    * 右カラム内（旧位置）は縦に細長く潰れるので、構造変更時の保険に格下げ。
+   *
+   * FANZA 同人: ジャンル等の情報リスト（.m-productInformation を含む
+   * .l-areaProductInfo）の直後 = 紹介文（.l-areaProductSummary）の手前。
    */
   const ANCHORS = [
+    // DLsite
     { selector: "#work_header", position: "afterend" },
     { selector: "#intro-title", position: "beforebegin" },
     { selector: ".work_parts_container", position: "beforebegin" },
@@ -28,6 +40,12 @@ globalThis.DPT_DOM = (() => {
     { selector: "#work_outline", position: "beforebegin" },
     { selector: "#work_buy_box_wrapper", position: "afterend" },
     { selector: "#work_right", position: "beforeend" },
+    // FANZA 同人
+    { selector: ".l-areaProductInfo", position: "afterend" },
+    { selector: ".l-areaPromotionBnr", position: "beforebegin" },
+    { selector: ".l-areaProductSummary", position: "beforebegin" },
+    { selector: ".m-productInformation", position: "afterend" },
+    { selector: ".l-areaMainColumn", position: "beforeend" },
   ];
 
   function findAnchor() {
@@ -38,9 +56,12 @@ globalThis.DPT_DOM = (() => {
     return null;
   }
 
-  /** 作品ページかどうか。announce（予約作品）は価格履歴が無いので除く。 */
+  /** 作品ページかどうか。DLsite の announce（予約作品）は価格履歴が無いので除く。 */
   function isTrackablePage() {
-    return Boolean(productIdFromUrl()) && !location.pathname.includes("/announce/");
+    const id = productIdFromUrl();
+    if (!id) return false;
+    if (id.startsWith("RJ") && location.pathname.includes("/announce/")) return false;
+    return true;
   }
 
   /** お気に入り（欲しいものリスト）ページかどうか。全年齢サイト /home/ 側も同じ構造。 */
