@@ -195,7 +195,21 @@ async function runWatchCheck() {
   for (const entry of entries) {
     const s = stats[entry.id];
     if (!s) continue; // 未収録 / 取得失敗。次回に回す。
-    const update = { id: entry.id, lastSeen: { price: Number(s.current), rate: Number(s.discount_rate) || 0, at: Date.now() } };
+    // min / lowest は popup の「過去最安かどうか」表示に使う。
+    // is_lowest_ever は「更新」を厳密に見るため、最安と同値の日は false になる。
+    // 一覧では「今が最安値か」を知りたいので、min との同値も最安扱いにする。
+    const current = Number(s.current);
+    const min = Number.isFinite(Number(s.min)) ? Number(s.min) : null;
+    const update = {
+      id: entry.id,
+      lastSeen: {
+        price: current,
+        rate: Number(s.discount_rate) || 0,
+        min,
+        lowest: s.is_lowest_ever === true || (min !== null && current <= min),
+        at: Date.now(),
+      },
+    };
     if (WL.shouldNotify(entry, s)) {
       hits.push({ entry, stats: s });
       update.notified = { price: Number(s.current), at: Date.now() };

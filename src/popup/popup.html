@@ -24,11 +24,12 @@
       <div class="chips" id="chips" role="group" aria-label="表示する登録の種類">
         <button type="button" class="chip is-active" data-filter="all" aria-pressed="true">すべて</button>
         <button type="button" class="chip" data-filter="discount" aria-pressed="false">割引中</button>
+        <button type="button" class="chip" data-filter="lowest" aria-pressed="false">過去最安</button>
         <button type="button" class="chip" data-filter="notified" aria-pressed="false">通知済み</button>
       </div>
     </div>
 
-    <ul class="grid" id="list"></ul>
+    <ul class="list" id="list"></ul>
 
     <p class="empty" id="empty" hidden>
       まだ登録がありません。<br />

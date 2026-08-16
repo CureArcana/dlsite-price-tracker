@@ -195,34 +195,40 @@ h1 {
   outline-offset: 1px;
 }
 
-/* ── サムネイルのカードグリッド ── */
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 10px;
+/* ── ウォッチリストの行（左=サムネ、中央=タイトルと条件、右端=価格） ──
+   価格が右端で縦に揃うので、上から流し読みして買い時を探せる。 */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.grid:empty {
+.list:empty {
   display: none;
 }
 
 .item {
-  position: relative;
+  display: flex;
+  align-items: stretch;
   margin: 0;
 }
 
 .card {
-  display: block;
-  height: 100%;
+  flex: 1 1 auto;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 104px minmax(0, 1fr) auto;
+  column-gap: 12px;
+  align-items: center;
+  padding: 8px;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--bg);
   color: var(--fg);
   text-decoration: none;
-  overflow: hidden;
 }
 
 .card:hover {
@@ -237,7 +243,9 @@ h1 {
 .thumb {
   position: relative;
   display: block;
+  width: 104px;
   aspect-ratio: 4 / 3;
+  border-radius: 6px;
   background: var(--bg-sub);
   overflow: hidden;
 }
@@ -257,7 +265,7 @@ h1 {
   align-items: center;
   justify-content: center;
   color: var(--fg-sub);
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.04em;
 }
@@ -270,15 +278,72 @@ h1 {
   display: flex;
 }
 
+/* ── 中央: タイトル・通知条件・通知履歴 ── */
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.rule {
+  display: block;
+  color: var(--fg-sub);
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hit {
+  color: var(--accent-text);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+/* ── 右端: 価格ブロック ── */
+.pricing {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.price {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.price-muted {
+  color: var(--fg-sub);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.badges {
+  display: flex;
+  gap: 4px;
+}
+
 .off {
-  position: absolute;
-  left: 6px;
-  bottom: 6px;
   padding: 1px 7px;
   border-radius: 999px;
   background: var(--rate);
   color: #ffffff;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.02em;
 }
@@ -289,62 +354,38 @@ h1 {
   }
 }
 
-.meta {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-  padding: 7px 9px 0;
-}
-
-.price {
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.hit {
-  color: var(--accent-text);
+.lowest {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--accent-strong);
+  color: var(--on-accent);
   font-size: 10px;
   font-weight: 700;
+  letter-spacing: 0.02em;
 }
 
-.title {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow: hidden;
-  padding: 1px 9px 0;
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1.45;
-}
-
-.rule {
-  display: block;
-  padding: 2px 9px 8px;
+.min {
   color: var(--fg-sub);
   font-size: 10px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
-/* 解除。誤爆しないようカード右上の小さな丸に隔離し、ホバー/フォーカスで浮かせる */
+/* 解除。行の右端の外に出して、カード（リンク）との誤クリックを構造で防ぐ */
 .remove {
-  position: absolute;
-  top: 6px;
-  right: 6px;
+  align-self: center;
+  flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
+  margin-left: 6px;
   padding: 0;
   border: 0;
   border-radius: 999px;
-  background: rgba(17, 24, 28, 0.55);
-  color: #ffffff;
+  background: transparent;
+  color: var(--fg-sub);
   cursor: pointer;
-  opacity: 0.55;
+  opacity: 0.6;
 }
 
 .item:hover .remove,
@@ -353,7 +394,8 @@ h1 {
 }
 
 .remove:hover {
-  background: rgba(17, 24, 28, 0.8);
+  background: var(--bg-sub);
+  color: var(--fg);
 }
 
 .remove:focus-visible {
