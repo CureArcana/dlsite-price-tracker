@@ -167,9 +167,17 @@
         add.type = "button";
         add.className = "dpt-alert-btn dpt-alert-btn-primary";
         add.innerHTML = `${ICONS.bell}<span>安くなったら通知</span>`;
-        add.addEventListener("click", () => openForm(null));
+        // 押した瞬間に既定条件（過去最安）で登録する。先にフォームを開くと
+        // 1クリックで済むはずの登録が3クリックになる。条件は登録後に変えられる。
+        add.addEventListener("click", async () => {
+          const res = await WL.put(productId, { title: data.title, rule: null });
+          if (!res.ok && res.reason === "full") {
+            row.appendChild(say(`ウォッチリストは最大 ${res.max} 件です。不要なものを解除してください`, "warn"));
+            return;
+          }
+          paint();
+        });
         row.appendChild(add);
-        row.appendChild(say("通知の設定はこの端末内だけに保存されます"));
         return;
       }
 
@@ -355,12 +363,16 @@
     const legend = document.createElement("div");
     legend.className = "dpt-legend";
 
-    // ── フッター ──
-    const footer = document.createElement("div");
-    footer.className = "dpt-footer";
+    // ── 左右に分ける。左=グラフ一式、右=統計と通知などの操作系。
+    //    横並びになるのはパネル幅が広い時だけ（panel.css のコンテナクエリ）。 ──
+    const main = document.createElement("div");
+    main.className = "dpt-main";
+    const side = document.createElement("div");
+    side.className = "dpt-side";
 
     // 凡例はグラフの直下に置く。統計表を挟むと、何の凡例か分からなくなる。
-    body.append(tabs, summary, chartBox, legend, statsBox, footer);
+    main.append(tabs, summary, chartBox, legend);
+    body.append(main, side);
 
     function draw() {
       const days = PERIODS.find((p) => p.id === state.period)?.days ?? null;
@@ -473,7 +485,8 @@
       draw();
     });
 
-    // ── フッター（計測期間の明示 + 導線 + アフィリエイト表示） ──
+    // ── 右カラム（通知 + 統計 + 導線 + 計測期間の明示） ──
+    // 「DLsite で見る」は置かない。いま DLsite のページを見ている人に出しても意味が無い。
     const since = document.createElement("div");
     since.className = "dpt-since";
     since.textContent =
@@ -482,15 +495,6 @@
 
     const links = document.createElement("div");
     links.className = "dpt-links";
-    if (data.affiliate_url) {
-      const a = document.createElement("a");
-      a.className = "dpt-link dpt-link-primary";
-      a.href = data.affiliate_url;
-      a.target = "_blank";
-      a.rel = "sponsored noopener noreferrer";
-      a.innerHTML = `DLsite で見る ${ICONS.external}`;
-      links.appendChild(a);
-    }
     if (data.voicelabo_url) {
       const a = document.createElement("a");
       a.className = "dpt-link";
@@ -504,10 +508,9 @@
     const disclosure = document.createElement("div");
     disclosure.className = "dpt-disclosure";
     disclosure.textContent =
-      "「DLsite で見る」はアフィリエイトリンクです。価格は日次観測にもとづく参考値で、" +
-      "実際の販売価格は DLsite の表示が正となります。";
+      "価格は日次観測にもとづく参考値で、実際の販売価格は DLsite の表示が正となります。";
 
-    footer.append(buildAlertBar(data), since, links, disclosure);
+    side.append(buildAlertBar(data), statsBox, links, since, disclosure);
 
     draw();
   }

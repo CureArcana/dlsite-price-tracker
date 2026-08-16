@@ -478,10 +478,42 @@
   outline: 1px solid var(--dpt-border);
 }
 
-/* ── フッター ── */
-#dpt-panel .dpt-footer {
+/* ── 右カラム（通知・統計・導線）。狭い時はグラフの下に縦積み ── */
+#dpt-panel .dpt-side {
   padding-top: 10px;
   border-top: 1px solid var(--dpt-border);
+}
+
+/* パネル幅が広い時だけ左右に分ける（左=グラフ、右=操作系）。
+   @container 非対応ブラウザでは縦積みのままで、機能は損なわれない。 */
+@container (min-width: 900px) {
+  #dpt-panel .dpt-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 300px;
+    column-gap: 18px;
+    align-items: start;
+  }
+
+  #dpt-panel .dpt-side {
+    padding-top: 0;
+    border-top: 0;
+  }
+
+  #dpt-panel .dpt-legend {
+    margin-bottom: 0;
+  }
+
+  /* 統計は右カラムでは縦1列にし、ラベル左・値右で読み下ろせる形にする */
+  #dpt-panel .dpt-side .dpt-stats {
+    grid-template-columns: 1fr;
+  }
+
+  #dpt-panel .dpt-side .dpt-stat {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 8px;
+  }
 }
 
 #dpt-panel .dpt-since {
