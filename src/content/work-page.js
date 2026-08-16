@@ -170,7 +170,21 @@
         // 押した瞬間に既定条件（過去最安）で登録する。先にフォームを開くと
         // 1クリックで済むはずの登録が3クリックになる。条件は登録後に変えられる。
         add.addEventListener("click", async () => {
-          const res = await WL.put(productId, { title: data.title, rule: null });
+          // パネルは今の価格を知っているので、初回チェックを待たずに
+          // ウォッチリスト側へ価格・最安状態を出せるよう lastSeen も渡す。
+          const current = Number(data.stats.current);
+          const min = Number.isFinite(Number(data.stats.min)) ? Number(data.stats.min) : null;
+          const res = await WL.put(productId, {
+            title: data.title,
+            rule: null,
+            lastSeen: {
+              price: current,
+              rate: Number(data.stats.discount_rate) || 0,
+              min,
+              lowest: data.stats.is_lowest_ever === true || (min !== null && current <= min),
+              at: Date.now(),
+            },
+          });
           if (!res.ok && res.reason === "full") {
             row.appendChild(say(`ウォッチリストは最大 ${res.max} 件です。不要なものを解除してください`, "warn"));
             return;

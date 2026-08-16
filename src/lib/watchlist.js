@@ -166,8 +166,11 @@ globalThis.DPT_WATCHLIST = (() => {
   /**
    * 追加または条件の更新。既にあるものは条件だけ差し替え、
    * 通知履歴（notified）は引き継ぐ。条件をいじった拍子に鳴り直すのを防ぐ。
+   *
+   * lastSeen は作品ページからの登録時に渡す（パネルは今の価格を知っているので、
+   * 次の定期チェックを待たずにウォッチリストへ価格・最安状態を出せる）。
    */
-  async function put(productId, { title = null, rule = null } = {}) {
+  async function put(productId, { title = null, rule = null, lastSeen = null } = {}) {
     if (!/^RJ\d+$/i.test(String(productId || ""))) return { ok: false, reason: "invalid_id" };
     const id = String(productId).toUpperCase();
     const map = await readAll();
@@ -184,7 +187,7 @@ globalThis.DPT_WATCHLIST = (() => {
       addedAt: prev?.addedAt || Date.now(),
       rule: normalizeRule(rule || prev?.rule),
       notified: prev?.notified || null,
-      lastSeen: prev?.lastSeen || null,
+      lastSeen: lastSeen || prev?.lastSeen || null,
     };
     const ok = await writeAll(map);
     return { ok, entry: map[id], created: !prev };

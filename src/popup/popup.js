@@ -64,17 +64,22 @@
     const q = state.q.trim().toLowerCase();
     return entries.filter((e) => {
       if (state.filter === "discount" && !(Number(e.lastSeen?.rate) > 0)) return false;
+      if (state.filter === "lowest" && e.lastSeen?.lowest !== true) return false;
       if (state.filter === "notified" && !e.notified) return false;
       if (q && !`${e.title || ""} ${e.id}`.toLowerCase().includes(q)) return false;
       return true;
     });
   }
 
+  /**
+   * 1件 = 1行。左にサムネイル、中央にタイトルと条件、右端に価格ブロック。
+   * 価格が右端で縦に揃うので、一覧を上から流し読みして買い時を探せる。
+   */
   function buildCard(e) {
     const li = document.createElement("li");
     li.className = "item";
 
-    // カード全体を作品ページへのリンクにする。フルタイトルはネイティブの
+    // 行全体を作品ページへのリンクにする。フルタイトルはネイティブの
     // ツールチップ（title 属性）でカーソルオーバー時に見せる。
     const a = document.createElement("a");
     a.className = "card";
@@ -83,6 +88,7 @@
     a.rel = "noopener noreferrer";
     a.title = e.title || e.id;
 
+    // ── 左: サムネイル ──
     const thumb = document.createElement("span");
     thumb.className = "thumb";
     const src = thumbUrl(e.id);
@@ -101,37 +107,65 @@
     fallback.textContent = e.id;
     thumb.appendChild(fallback);
 
-    const rate = Number(e.lastSeen?.rate) || 0;
-    if (rate > 0) {
-      const off = document.createElement("span");
-      off.className = "off";
-      off.textContent = `${rate}%OFF`;
-      thumb.appendChild(off);
-    }
-
-    const meta = document.createElement("span");
-    meta.className = "meta";
-    const price = document.createElement("span");
-    price.className = "price";
-    price.textContent = e.lastSeen ? yen(e.lastSeen.price) : "未確認";
-    meta.appendChild(price);
-    if (e.notified?.price) {
-      const hit = document.createElement("span");
-      hit.className = "hit";
-      hit.textContent = "通知済み";
-      hit.title = `${yen(e.notified.price)}で通知済み（さらに安くなったら再通知）`;
-      meta.appendChild(hit);
-    }
-
+    // ── 中央: タイトルと通知条件 ──
+    const info = document.createElement("span");
+    info.className = "info";
     const title = document.createElement("span");
     title.className = "title";
     title.textContent = e.title || e.id;
-
     const rule = document.createElement("span");
     rule.className = "rule";
     rule.textContent = WL.describeRule(e.rule);
+    info.append(title, rule);
+    if (e.notified?.price) {
+      const hit = document.createElement("span");
+      hit.className = "hit";
+      hit.textContent = `${yen(e.notified.price)}で通知済み`;
+      hit.title = "さらに安くなったら再通知します";
+      info.appendChild(hit);
+    }
 
-    a.append(thumb, meta, title, rule);
+    // ── 右: 価格ブロック（現在価格・割引率・最安状態） ──
+    const pricing = document.createElement("span");
+    pricing.className = "pricing";
+    if (e.lastSeen) {
+      const price = document.createElement("span");
+      price.className = "price";
+      price.textContent = yen(e.lastSeen.price);
+      pricing.appendChild(price);
+
+      const badges = document.createElement("span");
+      badges.className = "badges";
+      const rate = Number(e.lastSeen.rate) || 0;
+      if (rate > 0) {
+        const off = document.createElement("span");
+        off.className = "off";
+        off.textContent = `${rate}%OFF`;
+        badges.appendChild(off);
+      }
+      if (e.lastSeen.lowest === true) {
+        const lowest = document.createElement("span");
+        lowest.className = "lowest";
+        lowest.textContent = "過去最安";
+        badges.appendChild(lowest);
+      }
+      if (badges.childElementCount > 0) pricing.appendChild(badges);
+
+      // 最安でない時は「あといくら下がれば最安か」の物差しとして最安値を添える
+      if (e.lastSeen.lowest !== true && Number.isFinite(Number(e.lastSeen.min))) {
+        const min = document.createElement("span");
+        min.className = "min";
+        min.textContent = `過去最安 ${yen(e.lastSeen.min)}`;
+        pricing.appendChild(min);
+      }
+    } else {
+      const price = document.createElement("span");
+      price.className = "price price-muted";
+      price.textContent = "未確認";
+      pricing.appendChild(price);
+    }
+
+    a.append(thumb, info, pricing);
 
     const remove = document.createElement("button");
     remove.type = "button";
