@@ -20,6 +20,17 @@ globalThis.DPT_WATCHLIST = (() => {
   const MAX_ENTRIES = 300;
 
   /**
+   * 作品IDの正規化。DLsite の RJ 番号は大文字、FANZA 同人の cid（d_〜）は小文字。
+   * どちらでもなければ null（ウォッチリストに入れない）。
+   */
+  function normalizeId(raw) {
+    const s = String(raw || "").trim();
+    if (/^RJ\d+$/i.test(s)) return s.toUpperCase();
+    if (/^d_[a-z0-9_]+$/i.test(s)) return s.toLowerCase();
+    return null;
+  }
+
+  /**
    * 通知条件のモード。
    * `lowest` を既定にしているのは、設定を一切させずに一番役に立つから。
    * 金額や割引率を自分で決めたい人だけが他を選ぶ。
@@ -171,8 +182,8 @@ globalThis.DPT_WATCHLIST = (() => {
    * 次の定期チェックを待たずにウォッチリストへ価格・最安状態を出せる）。
    */
   async function put(productId, { title = null, rule = null, lastSeen = null } = {}) {
-    if (!/^RJ\d+$/i.test(String(productId || ""))) return { ok: false, reason: "invalid_id" };
-    const id = String(productId).toUpperCase();
+    const id = normalizeId(productId);
+    if (!id) return { ok: false, reason: "invalid_id" };
     const map = await readAll();
     const prev = map[id];
 
@@ -194,7 +205,7 @@ globalThis.DPT_WATCHLIST = (() => {
   }
 
   async function remove(productId) {
-    const id = String(productId || "").toUpperCase();
+    const id = normalizeId(productId) || String(productId || "");
     const map = await readAll();
     if (!map[id]) return { ok: true, removed: false };
     delete map[id];
@@ -217,8 +228,8 @@ globalThis.DPT_WATCHLIST = (() => {
     let full = false;
 
     for (const it of items || []) {
-      const id = String(it?.id || "").toUpperCase();
-      if (!/^RJ\d+$/.test(id)) continue;
+      const id = normalizeId(it?.id);
+      if (!id) continue;
       if (map[id]) {
         // 既に入っているものは触らない。設定済みの条件を上書きしたら事故。
         skipped += 1;
@@ -262,6 +273,7 @@ globalThis.DPT_WATCHLIST = (() => {
     MODES,
     MODE_LABELS,
     DEFAULT_RULE,
+    normalizeId,
     normalizeRule,
     describeRule,
     matches,

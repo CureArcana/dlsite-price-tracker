@@ -41,7 +41,8 @@
     {
       "matches": [
         "https://www.dlsite.com/*/work/=/product_id/*",
-        "https://www.dlsite.com/*/announce/=/product_id/*"
+        "https://www.dlsite.com/*/announce/=/product_id/*",
+        "https://www.dmm.co.jp/dc/doujin/-/detail/*"
       ],
       "js": [
         "src/lib/dom.js",

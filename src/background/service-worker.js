@@ -208,6 +208,9 @@ async function runWatchCheck() {
         list: Number.isFinite(Number(s.list_price)) ? Number(s.list_price) : null,
         min,
         lowest: s.is_lowest_ever === true || (min !== null && current <= min),
+        // FANZA のサムネは floor が URL に入り ID から組み立てられないため、
+        // サーバーが返す実 URL を保存する（popup がこれを最優先で使う）。
+        thumb: typeof s.thumb === "string" && s.thumb ? s.thumb : null,
         at: Date.now(),
       },
     };

@@ -40,23 +40,36 @@
     return `${Math.floor(h / 24)}日前`;
   }
 
-  /** 作品ページの URL。素の DLsite URL にする（ここはアフィリンクにしない）。
-   *  ユーザー自身の管理画面なので、自分の一覧から自分のアフィを踏ませる意味がない。 */
-  const workUrl = (id) =>
-    `https://www.dlsite.com/maniax/work/=/product_id/${encodeURIComponent(id)}.html`;
+  /**
+   * 作品ページへの遷移はボイラボの /go リダイレクタを経由する。
+   * サーバー側でアフィリエイト URL（DLsite / FANZA）に変換して 302 で流すため、
+   * どのページから踏んでも当サイト経由の成果として計測され、かつアフィIDを
+   * 拡張に焼き込まずに済む（ID 変更を配布済みクライアント無更新で吸収できる）。
+   */
+  const workUrl = (id) => `https://voice-labo.com/api/ext/go/${encodeURIComponent(id)}`;
 
   /**
-   * DLsite のメイン画像 URL。RJ番号を 1000 単位で切り上げたフォルダに入っている
-   * （ボイラボ本体 frontend/lib/thumbnail.js と同じ規則）。
-   * 規則が変わった作品は onerror で「画像なし」表示に落ちるだけで、機能は壊れない。
+   * サムネイル URL。定期チェックがサーバーから受け取った実 URL（lastSeen.thumb）を
+   * 最優先で使い、無ければ ID から組み立てる。
+   * DLsite: RJ番号を 1000 単位で切り上げたフォルダ（frontend/lib/thumbnail.js と同じ規則）。
+   * FANZA: floor（voice/game 等）が URL に入るため確実には組めない。voice 決め打ちで
+   * 試し、外れたら onerror で「画像なし」表示に落ちるだけ（機能は壊れない）。
    */
-  function thumbUrl(id) {
-    const m = String(id || "").match(/^RJ(\d+)$/i);
-    if (!m) return null;
-    const numStr = m[1];
-    const group = Math.ceil(parseInt(numStr, 10) / 1000) * 1000;
-    const groupStr = String(group).padStart(numStr.length, "0");
-    return `https://img.dlsite.jp/modpub/images2/work/doujin/RJ${groupStr}/${String(id).toUpperCase()}_img_main.jpg`;
+  function thumbUrl(e) {
+    if (e.lastSeen?.thumb) return e.lastSeen.thumb;
+    const id = String(e.id || "");
+    const rj = id.match(/^RJ(\d+)$/i);
+    if (rj) {
+      const numStr = rj[1];
+      const group = Math.ceil(parseInt(numStr, 10) / 1000) * 1000;
+      const groupStr = String(group).padStart(numStr.length, "0");
+      return `https://img.dlsite.jp/modpub/images2/work/doujin/RJ${groupStr}/${id.toUpperCase()}_img_main.jpg`;
+    }
+    if (/^d_[a-z0-9_]+$/i.test(id)) {
+      const cid = id.toLowerCase();
+      return `https://doujin-assets.dmm.co.jp/digital/voice/${cid}/${cid}pl.jpg`;
+    }
+    return null;
   }
 
   /** 現在の絞り込みを適用する。 */
@@ -118,7 +131,7 @@
     // ── 上段左: サムネイル ──
     const thumb = document.createElement("span");
     thumb.className = "thumb";
-    const src = thumbUrl(e.id);
+    const src = thumbUrl(e);
     if (src) {
       const img = document.createElement("img");
       img.src = src;
