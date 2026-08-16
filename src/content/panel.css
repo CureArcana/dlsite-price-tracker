@@ -23,9 +23,6 @@
   /* 割引帯は面積が広い（多くの作品でほぼ全期間が割引）。--dpt-accent-soft のままだと
      地と図が反転して「白い非割引期間」のほうが強調されて見えるので、専用に薄くする。 */
   --dpt-band: rgba(16, 185, 129, 0.075);
-  /* 割引率の線・右軸・凡例用の赤。白地に #dc2626 は 4.5:1 で、
-     テキスト（右軸ラベル）にも非テキスト（線 3:1）にも足りる。 */
-  --dpt-rate: #dc2626;
   --dpt-bg: #ffffff;
   --dpt-bg-sub: #f7f9f8;
   --dpt-fg: #1f2937;
@@ -35,7 +32,7 @@
 
   display: block;
   box-sizing: border-box;
-  margin: 20px 0;
+  margin: 12px 0;
   padding: 0;
   border: 1px solid var(--dpt-border);
   border-radius: 10px;
@@ -58,7 +55,6 @@
     --dpt-on-accent: #06231a;
     --dpt-line: #12c98a;
     --dpt-band: rgba(18, 201, 138, 0.10);
-    --dpt-rate: #f87171;
     --dpt-bg: #16191c;
     --dpt-bg-sub: #1d2125;
     --dpt-fg: #e5e7eb;
@@ -95,7 +91,7 @@
   gap: 8px;
   width: 100%;
   margin: 0;
-  padding: 11px 14px;
+  padding: 8px 12px;
   border: 0;
   background: none;
   color: inherit;
@@ -132,7 +128,7 @@
 }
 
 #dpt-panel .dpt-body {
-  padding: 14px;
+  padding: 10px 12px;
 }
 
 #dpt-panel.dpt-collapsed .dpt-body {
@@ -141,7 +137,7 @@
 
 /* ── 状態表示 ── */
 #dpt-panel .dpt-state {
-  padding: 18px 4px;
+  padding: 12px 4px;
   color: var(--dpt-fg-sub);
   text-align: center;
 }
@@ -157,12 +153,12 @@
 #dpt-panel .dpt-tabs {
   display: flex;
   gap: 4px;
-  margin: 0 0 12px;
+  margin: 0 0 8px;
 }
 
 #dpt-panel .dpt-tab {
   margin: 0;
-  padding: 5px 12px;
+  padding: 3px 10px;
   border: 1px solid var(--dpt-border);
   border-radius: 999px;
   background: transparent;
@@ -195,7 +191,7 @@
   flex-wrap: wrap;
   align-items: baseline;
   gap: 8px;
-  margin: 0 0 10px;
+  margin: 0 0 6px;
 }
 
 #dpt-panel .dpt-badge {
@@ -234,7 +230,7 @@
 }
 
 #dpt-panel .dpt-current {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
   letter-spacing: 0.01em;
 }
@@ -254,17 +250,17 @@
 /* ── グラフ ── */
 #dpt-panel .dpt-chart-box {
   /* chart.js がこの値を読んで viewBox の高さに使う。単位は px で書くこと。 */
-  --dpt-chart-h: 210px;
+  --dpt-chart-h: 170px;
 
   position: relative;
-  margin: 0 0 10px;
+  margin: 0 0 6px;
 }
 
 /* 全幅（900px 超）に置かれた時は縦横比が寝すぎるので、グラフを一段高くする。
-   @container 非対応ブラウザではこのブロックが無視され 210px のまま（劣化なし）。 */
+   @container 非対応ブラウザではこのブロックが無視され 170px のまま（劣化なし）。 */
 @container (min-width: 900px) {
   #dpt-panel .dpt-chart-box {
-    --dpt-chart-h: 260px;
+    --dpt-chart-h: 200px;
   }
 }
 
@@ -312,22 +308,6 @@
   vector-effect: non-scaling-stroke;
 }
 
-/* 割引率（右軸スケール）。主役の販売価格より細くして主従を保つ */
-#dpt-panel .dpt-line-rate {
-  fill: none;
-  stroke: var(--dpt-rate);
-  stroke-width: 1.75;
-  stroke-linejoin: round;
-  vector-effect: non-scaling-stroke;
-  opacity: 0.9;
-}
-
-#dpt-panel .dpt-axis-rate text {
-  fill: var(--dpt-rate);
-  font-size: 10px;
-  text-anchor: start;
-}
-
 #dpt-panel .dpt-marks circle {
   fill: var(--dpt-line);
   stroke: var(--dpt-bg);
@@ -372,12 +352,6 @@
   font-weight: 700;
 }
 
-#dpt-panel .dpt-tip-rate {
-  color: var(--dpt-rate);
-  font-size: 11px;
-  font-weight: 700;
-}
-
 #dpt-panel .dpt-tip-sub {
   color: var(--dpt-fg-sub);
   font-size: 11px;
@@ -388,7 +362,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
   gap: 1px;
-  margin: 0 0 10px;
+  margin: 0 0 8px;
   padding: 0;
   border: 1px solid var(--dpt-border);
   border-radius: 8px;
@@ -398,7 +372,7 @@
 
 #dpt-panel .dpt-stat {
   margin: 0;
-  padding: 7px 10px;
+  padding: 5px 9px;
   background: var(--dpt-bg);
 }
 
@@ -419,7 +393,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  margin: 0 0 12px;
+  margin: 0 0 8px;
 }
 
 #dpt-panel .dpt-key {
@@ -460,10 +434,6 @@
   background: var(--dpt-accent);
 }
 
-#dpt-panel .dpt-swatch-rate {
-  background: var(--dpt-rate);
-}
-
 #dpt-panel .dpt-swatch-list {
   background: repeating-linear-gradient(
     90deg,
@@ -480,7 +450,7 @@
 
 /* ── 右カラム（通知・統計・導線）。狭い時はグラフの下に縦積み ── */
 #dpt-panel .dpt-side {
-  padding-top: 10px;
+  padding-top: 8px;
   border-top: 1px solid var(--dpt-border);
 }
 
@@ -525,7 +495,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin: 8px 0;
+  margin: 6px 0;
 }
 
 #dpt-panel .dpt-links-center {
@@ -537,7 +507,7 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 6px 12px;
+  padding: 5px 10px;
   border: 1px solid var(--dpt-border);
   border-radius: 6px;
   color: var(--dpt-fg);
@@ -583,8 +553,8 @@
 
 /* ── 価格アラート（作品ページのパネル内 / お気に入りページの取り込みバー共通） ── */
 #dpt-panel .dpt-alert {
-  margin: 0 0 10px;
-  padding: 10px 12px;
+  margin: 0 0 8px;
+  padding: 8px 10px;
   border: 1px solid var(--dpt-border);
   border-radius: 8px;
   background: var(--dpt-bg-sub);
@@ -604,7 +574,7 @@
   align-items: center;
   gap: 6px;
   margin: 0;
-  padding: 6px 12px;
+  padding: 5px 10px;
   border: 1px solid var(--dpt-border);
   border-radius: 6px;
   background: var(--dpt-bg);
@@ -772,11 +742,11 @@
 /* ── 狭い画面 ── */
 @media (max-width: 600px) {
   #dpt-panel .dpt-chart-box {
-    --dpt-chart-h: 180px;
+    --dpt-chart-h: 150px;
   }
 
   #dpt-panel .dpt-current {
-    font-size: 18px;
+    font-size: 16px;
   }
 
   /* ラベルと入力を縦に積む。132px のラベル幅を残すと入力欄が潰れる。 */

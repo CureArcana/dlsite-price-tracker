@@ -205,6 +205,7 @@ async function runWatchCheck() {
       lastSeen: {
         price: current,
         rate: Number(s.discount_rate) || 0,
+        list: Number.isFinite(Number(s.list_price)) ? Number(s.list_price) : null,
         min,
         lowest: s.is_lowest_ever === true || (min !== null && current <= min),
         at: Date.now(),

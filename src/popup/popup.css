@@ -134,7 +134,7 @@ h1 {
   min-height: 1.6em;
 }
 
-/* ── 絞り込み ── */
+/* ── 並び順と絞り込み ── */
 .filters {
   display: flex;
   flex-wrap: wrap;
@@ -143,11 +143,9 @@ h1 {
   margin: 0 0 10px;
 }
 
-.search {
-  flex: 1 1 180px;
-  min-width: 0;
+.sort {
   margin: 0;
-  padding: 6px 10px;
+  padding: 5px 8px;
   border: 1px solid var(--border);
   border-radius: 6px;
   background: var(--bg);
@@ -156,7 +154,7 @@ h1 {
   font-size: 12px;
 }
 
-.search:focus-visible {
+.sort:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
 }
@@ -195,12 +193,12 @@ h1 {
   outline-offset: 1px;
 }
 
-/* ── ウォッチリストの行（左=サムネ、中央=タイトルと条件、右端=価格） ──
-   価格が右端で縦に揃うので、上から流し読みして買い時を探せる。 */
+/* ── ウォッチリスト（枠なしのコンパクトカード） ──
+   上段: 左にサムネイル・右に 2×2 の価格グリッド。下段: タイトル（尻切れ）と条件。 */
 .list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 14px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -210,44 +208,51 @@ h1 {
   display: none;
 }
 
+/* タブで開いた広い画面では2列に */
+@media (min-width: 700px) {
+  .list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+}
+
 .item {
-  display: flex;
-  align-items: stretch;
+  position: relative;
   margin: 0;
 }
 
 .card {
-  flex: 1 1 auto;
+  display: block;
   min-width: 0;
-  display: grid;
-  grid-template-columns: 104px minmax(0, 1fr) auto;
-  column-gap: 12px;
-  align-items: center;
-  padding: 8px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--bg);
   color: var(--fg);
   text-decoration: none;
 }
 
-.card:hover {
-  border-color: var(--accent);
-}
-
 .card:focus-visible {
   outline: 2px solid var(--accent);
-  outline-offset: 1px;
+  outline-offset: 2px;
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .thumb {
   position: relative;
   display: block;
-  width: 104px;
+  flex: 0 0 150px;
   aspect-ratio: 4 / 3;
   border-radius: 6px;
   background: var(--bg-sub);
   overflow: hidden;
+}
+
+.card:hover .thumb {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
 }
 
 .thumb img {
@@ -278,114 +283,99 @@ h1 {
   display: flex;
 }
 
-/* ── 中央: タイトル・通知条件・通知履歴 ── */
-.info {
+/* ── 2×2 の価格グリッド（定価 / 現在 / 割引率 / 過去最安） ── */
+.pricing {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 10px;
+  align-content: center;
+  padding-right: 22px; /* 右上の解除ボタンと重ならない逃げ */
+}
+
+.cell {
   display: flex;
   flex-direction: column;
-  gap: 3px;
   min-width: 0;
 }
 
+.cell-label {
+  color: var(--fg-sub);
+  font-size: 10px;
+  line-height: 1.3;
+}
+
+.cell-value {
+  color: var(--fg-sub);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.cell-now .cell-value {
+  color: var(--fg);
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.cell-rate .cell-value {
+  color: var(--rate);
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.cell-lowest .cell-value {
+  color: var(--accent-text);
+  font-weight: 700;
+}
+
+.unchecked {
+  align-self: center;
+  color: var(--fg-sub);
+  font-size: 12px;
+}
+
+/* ── 下段: タイトル（尻切れ）と条件 ── */
 .title {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   overflow: hidden;
+  margin-top: 6px;
   font-size: 12px;
   font-weight: 700;
   line-height: 1.45;
 }
 
-.rule {
+.sub {
   display: block;
+  margin-top: 1px;
   color: var(--fg-sub);
-  font-size: 11px;
+  font-size: 10px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.hit {
-  color: var(--accent-text);
-  font-size: 10px;
-  font-weight: 700;
-}
-
-/* ── 右端: 価格ブロック ── */
-.pricing {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 3px;
-  text-align: right;
-  white-space: nowrap;
-}
-
-.price {
-  font-size: 15px;
-  font-weight: 700;
-  line-height: 1.2;
-}
-
-.price-muted {
-  color: var(--fg-sub);
-  font-size: 12px;
-  font-weight: 400;
-}
-
-.badges {
-  display: flex;
-  gap: 4px;
-}
-
-.off {
-  padding: 1px 7px;
-  border-radius: 999px;
-  background: var(--rate);
-  color: #ffffff;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-}
-
-@media (prefers-color-scheme: dark) {
-  .off {
-    color: #300a0a;
-  }
-}
-
-.lowest {
-  padding: 1px 7px;
-  border-radius: 999px;
-  background: var(--accent-strong);
-  color: var(--on-accent);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-}
-
-.min {
-  color: var(--fg-sub);
-  font-size: 10px;
-}
-
-/* 解除。行の右端の外に出して、カード（リンク）との誤クリックを構造で防ぐ */
+/* 解除。カード右上に浮かせ、ホバー/フォーカスの時だけ出す */
 .remove {
-  align-self: center;
-  flex: 0 0 auto;
+  position: absolute;
+  top: 0;
+  right: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
-  margin-left: 6px;
+  width: 22px;
+  height: 22px;
   padding: 0;
   border: 0;
   border-radius: 999px;
-  background: transparent;
+  background: var(--bg-sub);
   color: var(--fg-sub);
   cursor: pointer;
-  opacity: 0.6;
+  opacity: 0;
 }
 
 .item:hover .remove,
@@ -394,7 +384,6 @@ h1 {
 }
 
 .remove:hover {
-  background: var(--bg-sub);
   color: var(--fg);
 }
 

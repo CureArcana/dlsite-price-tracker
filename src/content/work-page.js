@@ -180,6 +180,7 @@
             lastSeen: {
               price: current,
               rate: Number(data.stats.discount_rate) || 0,
+              list: Number.isFinite(Number(data.stats.list_price)) ? Number(data.stats.list_price) : null,
               min,
               lowest: data.stats.is_lowest_ever === true || (min !== null && current <= min),
               at: Date.now(),
@@ -429,7 +430,6 @@
       }
 
       // グラフ
-      let rendered = null;
       if (points.length === 0) {
         chartBox.innerHTML = '<div class="dpt-state">この期間の記録がありません</div>';
       } else if (periodStats.min === periodStats.max) {
@@ -439,7 +439,7 @@
         flat.textContent = `この期間は ${F.yen(periodStats.current)} のまま動いていません`;
         chartBox.appendChild(flat);
       } else {
-        rendered = CHART.render(chartBox, {
+        CHART.render(chartBox, {
           points,
           lastObserved: data.last_observed,
           showListPrice: state.showList,
@@ -464,14 +464,6 @@
       priceKey.className = "dpt-key";
       priceKey.innerHTML = '<i class="dpt-swatch dpt-swatch-price"></i>販売価格';
       legend.appendChild(priceKey);
-
-      // 割引率の赤線は「描いた時だけ」凡例に載せる（割引が一度も無い作品では出ない）
-      if (rendered?.hasRate) {
-        const rateKey = document.createElement("span");
-        rateKey.className = "dpt-key";
-        rateKey.innerHTML = '<i class="dpt-swatch dpt-swatch-rate"></i>割引率（右軸）';
-        legend.appendChild(rateKey);
-      }
 
       const listToggle = document.createElement("button");
       listToggle.type = "button";
