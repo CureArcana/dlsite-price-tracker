@@ -17,12 +17,12 @@
     status: document.getElementById("status"),
     check: document.getElementById("check"),
     clear: document.getElementById("clear"),
-    q: document.getElementById("q"),
+    sort: document.getElementById("sort"),
     chips: document.getElementById("chips"),
   };
 
-  /** 一覧の絞り込み状態。popup を開き直したらリセットされる（保存しない）。 */
-  const state = { q: "", filter: "all" };
+  /** 一覧の絞り込み・並び順の状態。popup を開き直したらリセットされる（保存しない）。 */
+  const state = { sort: "added", filter: "all" };
 
   const yen = (n) => (Number.isFinite(Number(n)) ? `${Number(n).toLocaleString("ja-JP")}円` : "—");
 
@@ -61,25 +61,52 @@
 
   /** 現在の絞り込みを適用する。 */
   function applyFilter(entries) {
-    const q = state.q.trim().toLowerCase();
     return entries.filter((e) => {
       if (state.filter === "discount" && !(Number(e.lastSeen?.rate) > 0)) return false;
       if (state.filter === "lowest" && e.lastSeen?.lowest !== true) return false;
       if (state.filter === "notified" && !e.notified) return false;
-      if (q && !`${e.title || ""} ${e.id}`.toLowerCase().includes(q)) return false;
       return true;
     });
   }
 
+  /** 並び順を適用する。価格・割引率が未確認のものは末尾へ回す。 */
+  function applySort(entries) {
+    if (state.sort === "price") {
+      return [...entries].sort(
+        (a, b) => (Number(a.lastSeen?.price) || Infinity) - (Number(b.lastSeen?.price) || Infinity),
+      );
+    }
+    if (state.sort === "rate") {
+      return [...entries].sort(
+        (a, b) => (Number(b.lastSeen?.rate) || 0) - (Number(a.lastSeen?.rate) || 0),
+      );
+    }
+    return entries; // added: WL.list() が返す追加の新しい順
+  }
+
+  /** 2×2 の価格セル。ラベル＋値の縦組み。 */
+  function cell(label, value, cls) {
+    const c = document.createElement("span");
+    c.className = `cell${cls ? ` ${cls}` : ""}`;
+    const l = document.createElement("span");
+    l.className = "cell-label";
+    l.textContent = label;
+    const v = document.createElement("span");
+    v.className = "cell-value";
+    v.textContent = value;
+    c.append(l, v);
+    return c;
+  }
+
   /**
-   * 1件 = 1行。左にサムネイル、中央にタイトルと条件、右端に価格ブロック。
-   * 価格が右端で縦に揃うので、一覧を上から流し読みして買い時を探せる。
+   * 1件のカード。上段は左にサムネイル・右に 2×2 の価格グリッド
+   * （定価 / 現在 / 割引率 / 過去最安）、その下にタイトルと通知条件。
    */
   function buildCard(e) {
     const li = document.createElement("li");
     li.className = "item";
 
-    // 行全体を作品ページへのリンクにする。フルタイトルはネイティブの
+    // カード全体を作品ページへのリンクにする。フルタイトルはネイティブの
     // ツールチップ（title 属性）でカーソルオーバー時に見せる。
     const a = document.createElement("a");
     a.className = "card";
@@ -88,7 +115,7 @@
     a.rel = "noopener noreferrer";
     a.title = e.title || e.id;
 
-    // ── 左: サムネイル ──
+    // ── 上段左: サムネイル ──
     const thumb = document.createElement("span");
     thumb.className = "thumb";
     const src = thumbUrl(e.id);
@@ -107,65 +134,43 @@
     fallback.textContent = e.id;
     thumb.appendChild(fallback);
 
-    // ── 中央: タイトルと通知条件 ──
-    const info = document.createElement("span");
-    info.className = "info";
-    const title = document.createElement("span");
-    title.className = "title";
-    title.textContent = e.title || e.id;
-    const rule = document.createElement("span");
-    rule.className = "rule";
-    rule.textContent = WL.describeRule(e.rule);
-    info.append(title, rule);
-    if (e.notified?.price) {
-      const hit = document.createElement("span");
-      hit.className = "hit";
-      hit.textContent = `${yen(e.notified.price)}で通知済み`;
-      hit.title = "さらに安くなったら再通知します";
-      info.appendChild(hit);
-    }
-
-    // ── 右: 価格ブロック（現在価格・割引率・最安状態） ──
+    // ── 上段右: 2×2 の価格グリッド ──
     const pricing = document.createElement("span");
     pricing.className = "pricing";
     if (e.lastSeen) {
-      const price = document.createElement("span");
-      price.className = "price";
-      price.textContent = yen(e.lastSeen.price);
-      pricing.appendChild(price);
-
-      const badges = document.createElement("span");
-      badges.className = "badges";
-      const rate = Number(e.lastSeen.rate) || 0;
-      if (rate > 0) {
-        const off = document.createElement("span");
-        off.className = "off";
-        off.textContent = `${rate}%OFF`;
-        badges.appendChild(off);
-      }
-      if (e.lastSeen.lowest === true) {
-        const lowest = document.createElement("span");
-        lowest.className = "lowest";
-        lowest.textContent = "過去最安";
-        badges.appendChild(lowest);
-      }
-      if (badges.childElementCount > 0) pricing.appendChild(badges);
-
-      // 最安でない時は「あといくら下がれば最安か」の物差しとして最安値を添える
-      if (e.lastSeen.lowest !== true && Number.isFinite(Number(e.lastSeen.min))) {
-        const min = document.createElement("span");
-        min.className = "min";
-        min.textContent = `過去最安 ${yen(e.lastSeen.min)}`;
-        pricing.appendChild(min);
-      }
+      const s = e.lastSeen;
+      const rate = Number(s.rate) || 0;
+      pricing.appendChild(cell("定価", Number.isFinite(Number(s.list)) ? yen(s.list) : "—"));
+      pricing.appendChild(cell("現在", yen(s.price), "cell-now"));
+      pricing.appendChild(cell("割引率", rate > 0 ? `${rate}%OFF` : "—", rate > 0 ? "cell-rate" : ""));
+      pricing.appendChild(
+        s.lowest === true
+          ? cell("過去最安", "いまが最安", "cell-lowest")
+          : cell("過去最安", Number.isFinite(Number(s.min)) ? yen(s.min) : "—"),
+      );
     } else {
-      const price = document.createElement("span");
-      price.className = "price price-muted";
-      price.textContent = "未確認";
-      pricing.appendChild(price);
+      const unchecked = document.createElement("span");
+      unchecked.className = "unchecked";
+      unchecked.textContent = "未確認";
+      pricing.appendChild(unchecked);
     }
 
-    a.append(thumb, info, pricing);
+    const top = document.createElement("span");
+    top.className = "top";
+    top.append(thumb, pricing);
+
+    // ── 下段: タイトル（尻切れ）と通知条件 ──
+    const title = document.createElement("span");
+    title.className = "title";
+    title.textContent = e.title || e.id;
+
+    const sub = document.createElement("span");
+    sub.className = "sub";
+    sub.textContent =
+      WL.describeRule(e.rule) +
+      (e.notified?.price ? `／${yen(e.notified.price)}で通知済み` : "");
+
+    a.append(top, title, sub);
 
     const remove = document.createElement("button");
     remove.type = "button";
@@ -184,7 +189,7 @@
 
   async function paint() {
     const entries = await WL.list();
-    const shown = applyFilter(entries);
+    const shown = applySort(applyFilter(entries));
     const last = (await chrome.storage.local.get("watchCheck")).watchCheck;
     const filtered = shown.length !== entries.length;
 
@@ -204,8 +209,8 @@
     for (const e of shown) els.list.appendChild(buildCard(e));
   }
 
-  els.q.addEventListener("input", () => {
-    state.q = els.q.value;
+  els.sort.addEventListener("change", () => {
+    state.sort = els.sort.value;
     paint();
   });
 

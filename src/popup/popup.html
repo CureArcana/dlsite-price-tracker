@@ -20,7 +20,11 @@
     <p class="status" id="status" role="status"></p>
 
     <div class="filters">
-      <input type="search" id="q" class="search" placeholder="タイトルで絞り込み" aria-label="タイトルで絞り込み" />
+      <select id="sort" class="sort" aria-label="並び順">
+        <option value="added">追加順</option>
+        <option value="price">価格が安い順</option>
+        <option value="rate">割引率が高い順</option>
+      </select>
       <div class="chips" id="chips" role="group" aria-label="表示する登録の種類">
         <button type="button" class="chip is-active" data-filter="all" aria-pressed="true">すべて</button>
         <button type="button" class="chip" data-filter="discount" aria-pressed="false">割引中</button>
