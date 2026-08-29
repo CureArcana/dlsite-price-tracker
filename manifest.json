@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "DLsite Price Tracker",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "DLsite の作品ページに価格と割引の推移グラフを表示し、狙った価格まで下がったら通知します。今が買い時かどうかが一目で分かります。",
   "author": "VoiceLaboratory (voice-labo.com)",
   "homepage_url": "https://github.com/CureArcana/dlsite-price-tracker",

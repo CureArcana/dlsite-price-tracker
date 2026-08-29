@@ -85,19 +85,28 @@ globalThis.DPT_CHART = (() => {
     const listValues = points.map((p) => p.l).filter((v) => typeof v === "number");
     const hasList = showListPrice && listValues.length > 0 && listValues.some((v, i) => v !== points[i].p);
 
-    const values = points.map((p) => p.p).concat(hasList ? listValues : []);
-    const lo = Math.min(...values);
-    const hi = Math.max(...values);
-    // 目盛りにスナップさせず、データの上下に一定割合の余白だけ取る。
-    // グリッドの倍数まで丸めると、上下に使われない帯ができて縦方向が無駄になる。
-    // 値動きが無い（hi===lo）と (hi-lo)*0.12 が 0 になり、niceStep が 0.5 円刻みに潰れて
-    // y 軸ラベルが「1,320 / 1,320 / 1,320」等になる。値そのものの 10% を下限にして
-    // 現実的な価格帯レンジ（例 1,320 円なら ±132 円）を確保する。
-    const margin = hi === lo
-      ? Math.max(hi * 0.1, 100)
-      : Math.max((hi - lo) * 0.12, 1);
-    const yMin = Math.max(0, lo - margin);
-    const yMax = hi + margin;
+    const priceValues = points.map((p) => p.p);
+    const values = priceValues.concat(hasList ? listValues : []);
+    const observedLo = Math.min(...values);
+    const observedHi = Math.max(...values);
+
+    // ── y 軸のレンジ設計 ──
+    // 「定価が天井、下に割引の余白」を常に見せる。従来は観測値の上下に均等マージン
+    // だったので、値動き無しの作品では真ん中に線が寄り、割引されてもインパクトが薄い。
+    // 定価 (list_price の最大値) を基準にし、その 5% 上を yMax、下方は「実測最安」か
+    // 「定価の 50%」の低い方を yMin にすることで、
+    //   - 値動き無し: 線が上寄り + 下に「もしセールが来たら」の余白
+    //   - 割引中:    定価線 (点線) が上寄り + 販売価格が中〜下でドラマチックに見える
+    //   - 大幅割引:  販売価格が下端に張り付き、定価との距離感で「安さ」が伝わる
+    // をどれも成立させる。
+    const ceilingValue = listValues.length > 0
+      ? Math.max(...listValues)
+      : observedHi;
+    const yMaxRaw = Math.max(ceilingValue, observedHi) * 1.05;
+    const yMinRaw = Math.max(0, Math.min(observedLo, ceilingValue * 0.5) * 0.95);
+    // 万一 range が潰れた時の保険 (例: ceiling が異常に小さい / observed が 0)
+    const yMin = Math.max(0, Math.floor(yMinRaw));
+    const yMax = Math.max(yMin + 1, Math.ceil(yMaxRaw));
     const ySpan = Math.max(yMax - yMin, 1);
     const step = niceStep(ySpan);
 
