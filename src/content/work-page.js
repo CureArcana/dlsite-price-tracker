@@ -434,14 +434,11 @@
       }
 
       // グラフ
+      // 値動きが無くても必ずグラフを描く（水平線で「動いていない」ことを示す）。
+      // 以前は文言に差し替えていたが、Keepa 等と同じく利用者はまずグラフを見に来るため、
+      // 期間内の価格帯・目盛りを常時見せる方が読み取りやすい。
       if (points.length === 0) {
         chartBox.innerHTML = '<div class="dpt-state">この期間の記録がありません</div>';
-      } else if (periodStats.min === periodStats.max) {
-        chartBox.innerHTML = "";
-        const flat = document.createElement("div");
-        flat.className = "dpt-state";
-        flat.textContent = `この期間は ${F.yen(periodStats.current)} のまま動いていません`;
-        chartBox.appendChild(flat);
       } else {
         CHART.render(chartBox, {
           points,

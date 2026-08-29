@@ -9,11 +9,22 @@
 globalThis.DPT_DOM = (() => {
   /**
    * URL から product_id を取り出す。取れなければ null。
-   * DLsite は RJ 番号（大文字に正規化）、FANZA 同人は cid（d_〜、小文字に正規化）。
+   *
+   * 対応する接頭辞（バックエンドの ext_price_history.py の振り分けと揃える）:
+   *
+   *   - `RJ` : DLsite 音声（大文字に正規化）
+   *   - `BJ`, `VJ`, `WJ`, `RE`, `BR`, `VR`, `VE`, `WE`, `BE`
+   *          : DLsite 音声以外（漫画・CG・ノベル等。大文字に正規化）
+   *   - `d_` : FANZA 同人（cid=... の形。小文字に正規化）
+   *
+   * 拾い過ぎ回避のため、DLsite 側は接頭辞ホワイトリスト方式にしている。
+   * 新カテゴリが増えた場合は接頭辞を足す（backend の `_RE_DLSITE_NON_VOICE` と同期）。
    */
   function productIdFromUrl(href = location.href) {
-    let m = href.match(/\/product_id\/(RJ\d+)/i);
+    // DLsite: /product_id/XX999999 パターン。RJ / BJ / VJ / ... を許容
+    let m = href.match(/\/product_id\/((?:RJ|BJ|VJ|WJ|RE|BR|VR|VE|WE|BE)\d+)/i);
     if (m) return m[1].toUpperCase();
+    // FANZA 同人: cid=d_...
     m = href.match(/[/=]cid=(d_[a-z0-9_]+)/i);
     if (m) return m[1].toLowerCase();
     return null;
@@ -56,11 +67,12 @@ globalThis.DPT_DOM = (() => {
     return null;
   }
 
-  /** 作品ページかどうか。DLsite の announce（予約作品）は価格履歴が無いので除く。 */
+  /** 作品ページかどうか。DLsite の announce（予約作品）は価格履歴が無いので除く。
+   *  announce は音声以外にもあるため、DLsite の全接頭辞（d_ 以外）で除外する。 */
   function isTrackablePage() {
     const id = productIdFromUrl();
     if (!id) return false;
-    if (id.startsWith("RJ") && location.pathname.includes("/announce/")) return false;
+    if (!id.startsWith("d_") && location.pathname.includes("/announce/")) return false;
     return true;
   }
 
@@ -85,7 +97,8 @@ globalThis.DPT_DOM = (() => {
     const remember = (rawId, title) => {
       if (!rawId) return;
       const id = String(rawId).toUpperCase();
-      if (!/^RJ\d+$/.test(id)) return;
+      // DLsite ホワイトリスト（音声 RJ ＋ 音声以外の全接頭辞）
+      if (!/^(RJ|BJ|VJ|WJ|RE|BR|VR|VE|WE|BE)\d+$/.test(id)) return;
       const clean = (title || "").replace(/\s+/g, " ").trim();
       const prev = found.get(id);
       // タイトルは長いほうが本文らしい（「続きを読む」等の短い誤爆を避ける）
@@ -107,8 +120,11 @@ globalThis.DPT_DOM = (() => {
       return t.length > 3 ? t : own;
     };
 
-    root.querySelectorAll('a[href*="/product_id/RJ"]').forEach((a) => {
-      const m = a.getAttribute("href").match(/\/product_id\/(RJ\d+)/i);
+    // 「/product_id/XXnnn」を含むリンクを網羅（RJ 以外の接頭辞も拾う）。
+    // querySelectorAll の attr selector は部分一致（*= "/product_id/"）でよく、
+    // 中身の抽出時に productIdFromUrl と同じホワイトリスト正規表現で絞る。
+    root.querySelectorAll('a[href*="/product_id/"]').forEach((a) => {
+      const m = a.getAttribute("href").match(/\/product_id\/((?:RJ|BJ|VJ|WJ|RE|BR|VR|VE|WE|BE)\d+)/i);
       if (m) remember(m[1], titleNear(a));
     });
 

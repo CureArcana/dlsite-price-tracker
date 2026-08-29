@@ -54,7 +54,12 @@ globalThis.DPT_CHART = (() => {
     const PLOT_H = VIEW_H - PAD.top - PAD.bottom;
 
     const firstDay = F.parseDay(points[0].d);
-    const endDay = F.parseDay(lastObserved) || F.parseDay(points[points.length - 1].d);
+    const rawEndDay = F.parseDay(lastObserved) || F.parseDay(points[points.length - 1].d);
+    // 観測が同一日しか無いと x-range が 0 に潰れ、水平線が点になってしまう。
+    // 表示用に 1 日ぶん延ばして「その価格帯を示す水平線」を全幅に描く。
+    // 軸ラベルは singleDay 時に firstDay 一つだけにして、存在しない未来日を偽装しない。
+    const singleDay = F.dayDiff(rawEndDay, firstDay) === 0;
+    const endDay = singleDay ? new Date(firstDay.getTime() + 86400000) : rawEndDay;
     const totalDays = Math.max(F.dayDiff(endDay, firstDay), 1);
 
     // 定価は「表示する」かつ「販売価格と違う値が1つでもある」ときだけ描く。
@@ -67,7 +72,12 @@ globalThis.DPT_CHART = (() => {
     const hi = Math.max(...values);
     // 目盛りにスナップさせず、データの上下に一定割合の余白だけ取る。
     // グリッドの倍数まで丸めると、上下に使われない帯ができて縦方向が無駄になる。
-    const margin = Math.max((hi - lo) * 0.12, 1);
+    // 値動きが無い（hi===lo）と (hi-lo)*0.12 が 0 になり、niceStep が 0.5 円刻みに潰れて
+    // y 軸ラベルが「1,320 / 1,320 / 1,320」等になる。値そのものの 10% を下限にして
+    // 現実的な価格帯レンジ（例 1,320 円なら ±132 円）を確保する。
+    const margin = hi === lo
+      ? Math.max(hi * 0.1, 100)
+      : Math.max((hi - lo) * 0.12, 1);
     const yMin = Math.max(0, lo - margin);
     const yMax = hi + margin;
     const ySpan = Math.max(yMax - yMin, 1);
@@ -123,11 +133,19 @@ globalThis.DPT_CHART = (() => {
     svg.appendChild(marks);
 
     // ── 日付ラベル ──
+    // singleDay は endDay を仮想延長しているので dateTicks に渡すと存在しない日を表示してしまう。
+    // 観測日 1 つだけを marker と同じ左端に置く（プロット幅の中央だと marker と離れて読みにくい）。
     const xAxis = el("g", { class: "dpt-axis-x" });
-    for (const d of dateTicks(firstDay, endDay, PLOT_W)) {
-      const t = el("text", { x: x(d), y: VIEW_H - 8 });
-      t.textContent = `${d.getUTCMonth() + 1}/${d.getUTCDate()}`;
+    if (singleDay) {
+      const t = el("text", { x: x(firstDay), y: VIEW_H - 8 });
+      t.textContent = `${firstDay.getUTCMonth() + 1}/${firstDay.getUTCDate()}`;
       xAxis.appendChild(t);
+    } else {
+      for (const d of dateTicks(firstDay, endDay, PLOT_W)) {
+        const t = el("text", { x: x(d), y: VIEW_H - 8 });
+        t.textContent = `${d.getUTCMonth() + 1}/${d.getUTCDate()}`;
+        xAxis.appendChild(t);
+      }
     }
     svg.appendChild(xAxis);
 
@@ -149,7 +167,7 @@ globalThis.DPT_CHART = (() => {
     tip.hidden = true;
     container.appendChild(tip);
 
-    attachHover({ container, svg, guide, tip, points, x, firstDay, totalDays, hasList, VIEW_W, PLOT_W });
+    attachHover({ container, svg, guide, tip, points, x, firstDay, totalDays, hasList, VIEW_W, PLOT_W, singleDay });
 
     // パネル幅が変わったら実寸に合わせて描き直す（viewBox は実寸と一致させる約束のため）。
     let lastW = VIEW_W;
@@ -221,7 +239,7 @@ globalThis.DPT_CHART = (() => {
 
   /** ホバーでガイド線とツールチップを出す。 */
   function attachHover(ctx) {
-    const { container, svg, guide, tip, points, x, firstDay, totalDays, hasList, VIEW_W, PLOT_W } = ctx;
+    const { container, svg, guide, tip, points, x, firstDay, totalDays, hasList, VIEW_W, PLOT_W, singleDay } = ctx;
     const F = globalThis.DPT_FORMAT;
 
     const hide = () => {
@@ -238,7 +256,9 @@ globalThis.DPT_CHART = (() => {
       const ratio = (vx - PAD.left) / PLOT_W;
       if (ratio < -0.02 || ratio > 1.02) return hide();
 
-      const dayOffset = Math.round(Math.min(Math.max(ratio, 0), 1) * totalDays);
+      // singleDay は表示用に endDay を延長しているので、offset を素直に加算すると
+      // 「観測していない未来日」がツールチップに出てしまう。観測日 1 つに固定する。
+      const dayOffset = singleDay ? 0 : Math.round(Math.min(Math.max(ratio, 0), 1) * totalDays);
       const day = new Date(firstDay.getTime() + dayOffset * 86400000);
       const iso = day.toISOString().slice(0, 10);
 
