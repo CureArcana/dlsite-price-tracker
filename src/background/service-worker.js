@@ -41,7 +41,12 @@ const MAX_INDIVIDUAL_NOTIFICATIONS = 3;
 /** キャッシュ肥大を防ぐための保持上限。超えたら古い順に捨てる。 */
 const MAX_CACHED_WORKS = 500;
 
-const cacheKey = (productId) => `ph:${productId}`;
+// v0.3.1 で `ph:` → `ph2:` にリネーム。
+// 理由: v0.2.x + 旧 backend (RJ 音声決め打ちルーター) 時代に、DLsite の RJ 非音声
+// 作品 (漫画・CG) を開くと 404 が返り、それが `ph:` キーで 6 時間キャッシュされていた。
+// backend が 3-DB ルーティングで正しくデータを返すようになっても、キャッシュ TTL が
+// 切れるまで拡張は 404 を表示し続ける。プレフィックス変更で強制的に旧キャッシュを迂回する。
+const cacheKey = (productId) => `ph2:${productId}`;
 
 async function readCache(productId) {
   const key = cacheKey(productId);
