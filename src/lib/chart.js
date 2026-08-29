@@ -49,6 +49,24 @@ globalThis.DPT_CHART = (() => {
     container.textContent = "";
     if (!points || points.length === 0) return null;
 
+    // コンテナの幅が 0 (レイアウト未確定 / FANZA のように container パネル自体が
+    // まだ幅を持っていないタイミングがある) で描くと、SVG は fallback の 720 で作られ
+    // CSS の width:100% でコンテナ幅 0 に潰れ、視覚的に空になる。ResizeObserver が
+    // 幅変化を検知するまで描画そのものを保留する (F12 開閉で「なぜか出た」の症状はこれ)。
+    if (Math.round(container.getBoundingClientRect().width) === 0) {
+      let fired = false;
+      const roWait = new ResizeObserver(() => {
+        if (fired) return;
+        if (Math.round(container.getBoundingClientRect().width) > 0) {
+          fired = true;
+          roWait.disconnect();
+          render(container, opts);
+        }
+      });
+      roWait.observe(container);
+      return { disconnect: () => { fired = true; roWait.disconnect(); } };
+    }
+
     const { w: VIEW_W, h: VIEW_H } = measure(container);
     const PLOT_W = VIEW_W - PAD.left - PAD.right;
     const PLOT_H = VIEW_H - PAD.top - PAD.bottom;
