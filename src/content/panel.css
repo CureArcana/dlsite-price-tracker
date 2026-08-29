@@ -72,6 +72,14 @@
    グラフ比率を変えられるよう、コンテナクエリの基点にする。 */
 #dpt-panel {
   container-type: inline-size;
+  /* 防御: 親が display:table や flex で panel の inline size を intrinsic min に
+     潰す環境 (FANZA .l-areaVariableBoxGroup) でも、幅を親の content 幅に強制する。
+     container-type: inline-size があると intrinsic min = 0 になりがちで、
+     さらに枠線 (1+1px) が加算されて 2px に固定される問題があった (v0.3.2 実測)。 */
+  display: block;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 /* ── ヘッダ ── */

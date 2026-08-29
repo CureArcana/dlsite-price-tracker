@@ -51,10 +51,18 @@ globalThis.DPT_DOM = (() => {
     { selector: "#work_outline", position: "beforebegin" },
     { selector: "#work_buy_box_wrapper", position: "afterend" },
     { selector: "#work_right", position: "beforeend" },
-    // FANZA 同人
+    // FANZA 同人。優先順に注意:
+    //   `.l-areaProductInfo` afterend は 2026-08 時点で親が
+    //   `.l-areaVariableBoxGroup` (display:table)。そこに panel を挿入すると
+    //   `container-type: inline-size` の副作用で 2px 幅に潰れて描画されない
+    //   (実測 v0.3.2 で発覚: panel_computed_width=2px, parent_display=table)。
+    //   代わりに `.l-areaVariableBoxGroup` の外側 (`.l-areaVariableBox` の子)
+    //   に挿入する。視覚位置はほぼ同じ (紹介文の直前) で、table 外の通常ブロック
+    //   コンテキストで全幅を確保できる。
+    { selector: ".l-areaVariableBoxGroup", position: "afterend" },
+    { selector: ".l-areaProductSummary", position: "beforebegin" },
     { selector: ".l-areaProductInfo", position: "afterend" },
     { selector: ".l-areaPromotionBnr", position: "beforebegin" },
-    { selector: ".l-areaProductSummary", position: "beforebegin" },
     { selector: ".m-productInformation", position: "afterend" },
     { selector: ".l-areaMainColumn", position: "beforeend" },
   ];
